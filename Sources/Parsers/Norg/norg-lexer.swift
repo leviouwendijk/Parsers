@@ -2,23 +2,41 @@ import Foundation
 import plate
 import Extensions
 
+public struct NorgLexerOptions {
+    public let trimLeadingNewlines: Bool
+    public let trimTrailingNewlines: Bool
+    
+    public init(
+        trimLeadingNewlines: Bool = false,
+        trimTrailingNewlines: Bool = false
+    ) {
+        self.trimLeadingNewlines = trimLeadingNewlines
+        self.trimTrailingNewlines = trimTrailingNewlines
+    }
+}
+
 public struct NorgLexer {
     public let text: String
+    public let options: NorgLexerOptions
     public let verbose: Bool
 
     public init(
         text: String,
+        options: NorgLexerOptions = NorgLexerOptions(),
         verbose: Bool = false
     ) {
         self.text = text
+        self.options = options
         self.verbose = verbose
     }
 
     public init(
         file: String,
+        options: NorgLexerOptions = NorgLexerOptions(),
         verbose: Bool = false
     ) throws {
         self.text = try readFile(at: file)
+        self.options = options
         self.verbose = verbose
     }
 
@@ -27,7 +45,24 @@ public struct NorgLexer {
 
         let cleaned = text.strippingNorgMetadata
         let formatted = cleaned.emDashedFromHyphens()
-        let lines = formatted.splitByNewlines
+        var lines = formatted.splitByNewlines
+
+        if options.trimLeadingNewlines {
+            while let first = lines.first,
+                  first.trimmingCharacters(in: .whitespaces).isEmpty
+            {
+                lines.removeFirst()
+            }
+        }
+
+        if options.trimTrailingNewlines {
+            while let last = lines.last,
+                  last.trimmingCharacters(in: .whitespaces).isEmpty
+            {
+                lines.removeLast()
+            }
+        }
+
 
         if verbose { print("[VERBOSE] Split into \(lines.count) lines") }
 
