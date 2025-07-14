@@ -26,7 +26,8 @@ public struct NorgLexer {
         var tokens: [NorgToken] = []
 
         let cleaned = text.strippingNorgMetadata
-        let lines = cleaned.splitByNewlines
+        let formatted = cleaned.emDashedFromHyphens()
+        let lines = formatted.splitByNewlines
 
         if verbose { print("[VERBOSE] Split into \(lines.count) lines") }
 
