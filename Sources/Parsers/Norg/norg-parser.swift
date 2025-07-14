@@ -3,17 +3,16 @@ import AppKit
 
 public struct NorgParser {
     public let tokens: [NorgToken]
-    public var prev: NorgToken?
 
     public init(
         tokens: [NorgToken]
     ) {
         self.tokens = tokens
-        self.prev = nil
     }
 
-    public mutating func parse() -> NSAttributedString {
+    public func parse() -> NSAttributedString {
         let result = NSMutableAttributedString()
+        var prev: NorgToken?
 
         for token in tokens {
             switch token {
