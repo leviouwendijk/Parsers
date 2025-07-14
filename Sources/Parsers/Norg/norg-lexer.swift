@@ -130,58 +130,51 @@ public struct NorgLexer {
 
     private func parseInlineFormatting(_ text: String, verbose: Bool) -> [NorgToken] {
         var tokens: [NorgToken] = []
-        var idx = text.startIndex
+        let pattern = #"""
+        (\s+)                |   # 1: whitespace runs
+        \*(.*?)\*            |   # 2: *bold*
+        \/(.*?)\/            |   # 3: /italic/
+        \{\^ (\d+)\}         |   # 4: {^1} inline footnote
+        (--|—)               |   # 5: em dash
+        (['"])(.*?)\6        |   # 6/7: quotes
+        (\b\w+'\w+\b)        |   # 8: contraction
+        ([^\s*\/{]+)            # 9: other plaintext
+        """#
         let re = try! NSRegularExpression(
-            pattern: #"\*(.*?)\*|\/(.*?)\/|\{\^ (\d+)\}|(--|—)|(['\"])(.*?)\5|(\b\w+'\w+\b)|(\b\w+')"#
+            pattern: pattern,
+            options: [.allowCommentsAndWhitespace]
         )
         let ns = text as NSString
         let matches = re.matches(in: text, range: NSRange(0..<ns.length))
 
         for m in matches {
-            let before = text[idx..<text.index(text.startIndex, offsetBy: m.range.lowerBound)]
-            // if !before.trimmingCharacters(in: .whitespaces).isEmpty {
-            //     tokens.append(.plain(String(before)))
-            // }
-
-            let rawBefore = String(before)
-            let trimmedBefore = rawBefore.trimmingCharacters(in: .whitespaces)
-            if !trimmedBefore.isEmpty {
-                tokens.append(.plain(rawBefore.collapsingDoubleSpaces()))
-            }
-
             if let r = Range(m.range(at: 1), in: text) {
-                tokens.append(.bold(String(text[r])))
+                tokens.append(.whitespace(String(text[r])))
             }
             else if let r = Range(m.range(at: 2), in: text) {
-                tokens.append(.italic(String(text[r])))
+                tokens.append(.bold(String(text[r])))
             }
             else if let r = Range(m.range(at: 3), in: text) {
+                tokens.append(.italic(String(text[r])))
+            }
+            else if let r = Range(m.range(at: 4), in: text) {
                 tokens.append(.inlineFootnoteReference(String(text[r])))
             }
-            else if m.range(at: 4).location != NSNotFound {
+            else if m.range(at: 5).location != NSNotFound {
                 tokens.append(.plain("—"))
             }
-            else if let qt = Range(m.range(at: 5), in: text),
-                    let qc = Range(m.range(at: 6), in: text) {
-                let quote = text[qt] == "\"" ? "“\(text[qc])”" : "‘\(text[qc])’"
+            else if let qt = Range(m.range(at: 6), in: text),
+                    let qc = Range(m.range(at: 7), in: text) {
+                let quoteChar = text[qt] == "\"" ? "“" : "‘"
+                let quote      = "\(quoteChar)\(text[qc])\(quoteChar == "“" ? "”" : "’")"
                 tokens.append(.plain(quote))
-            }
-            else if let r = Range(m.range(at: 7), in: text) {
-                tokens.append(.plain(text[r].replacingOccurrences(of: "'", with: "’")))
             }
             else if let r = Range(m.range(at: 8), in: text) {
                 tokens.append(.plain(text[r].replacingOccurrences(of: "'", with: "’")))
             }
-
-            idx = text.index(text.startIndex, offsetBy: m.range.upperBound)
-        }
-
-        if idx < text.endIndex {
-            // tokens.append(.plain(String(text[idx...])))
-
-            let rawTail = String(text[idx...])
-            let tail = String(rawTail.drop(while: { $0.isWhitespace }))
-            tokens.append(.plain(tail.collapsingDoubleSpaces()))
+            else if let r = Range(m.range(at: 9), in: text) {
+                tokens.append(.plain(String(text[r])))
+            }
         }
 
         return tokens
