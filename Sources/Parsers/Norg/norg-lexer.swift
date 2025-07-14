@@ -22,7 +22,7 @@ public struct NorgLexer {
         self.verbose = verbose
     }
 
-    public func tokenize(_ text: String) -> [NorgToken] {
+    public func tokenize() -> [NorgToken] {
         var tokens: [NorgToken] = []
 
         let cleaned = text.strippingNorgMetadata

@@ -12,7 +12,7 @@ public struct NorgParser {
         self.prev = nil
     }
 
-    public mutating func parse(tokens: [NorgToken]) -> NSAttributedString {
+    public mutating func parse() -> NSAttributedString {
         let result = NSMutableAttributedString()
 
         for token in tokens {
