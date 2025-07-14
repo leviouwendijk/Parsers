@@ -14,6 +14,7 @@ public struct NorgParser {
         let result = NSMutableAttributedString()
         var prev: NorgToken?
 
+
         for token in tokens {
             switch token {
             case .bold(let txt):
@@ -60,25 +61,41 @@ public struct NorgParser {
         return result
     }
 
-    private func append(_ s: String, if cond: Bool, to buf: NSMutableAttributedString) {
-        if cond { buf.append(NSAttributedString(string: s)) }
+    private func append(
+        _ s: String,
+        if cond: Bool,
+        to buf: NSMutableAttributedString,
+        conservativeSpace mitigatingDoubleSpaceInjection: Bool = true
+    ) {
+        guard cond else { return }
+        
+        if mitigatingDoubleSpaceInjection {
+            guard !(s == " " && buf.string.hasSuffix(" ")) else { return } 
+        }
+
+        buf.append(NSAttributedString(string: s))
     }
 
     private func needsSpace(_ a: NorgToken?, _ b: NorgToken) -> Bool {
         guard let a = a else { return false }
         switch (a, b) {
+
         case (.plain(let p), .plain(let c)):
             if p.last == "”" || p.last == "’" { return ![",",".",";",":"].contains(c.first) }
             if p.hasSuffix("—") || c.hasPrefix("—") { return false }
             return !p.hasSuffix(" ") && !c.hasPrefix(" ")
+
         case (.italic, .plain(let c)), (.bold, .plain(let c)):
             if c.first == "—" { return false }
             return ![",",".",";",":","!","?"].contains(c.first)
+
         case (.plain(let p), .italic), (.plain(let p), .bold):
             if p.hasSuffix("—") || p.last == "“" || p.last == "(" { return false }
             return !p.hasSuffix(" ")
+
         case (.italic, .italic), (.bold, .bold):
             return false
+
         default:
             return true
         }
