@@ -6,6 +6,27 @@ public enum AttributedStringRenderingError: Error, LocalizedError {
     case failedToRender
 }
 
+public struct AttributedStringOptionHelper {
+    public init() {}
+
+    public static func justifiedParagraph() -> [NSAttributedString.Key: Any] {
+        let para = NSMutableParagraphStyle()
+        para.alignment = .justified
+        // para.lineSpacing = 4.0    
+        return [.paragraphStyle: para]
+    }
+
+    public static func merge(arrays: [[NSAttributedString.Key: Any]]) -> [NSAttributedString.Key: Any] {
+        var result: [NSAttributedString.Key: Any] = [:]
+        for attrs in arrays {
+            for (key, value) in attrs {
+                result[key] = value
+            }
+        }
+        return result
+    }
+}
+
 public struct AttributedStringRenderer {
     /// Output format: .html, .rtf, .docx, etc.
     public var documentType: NSAttributedString.DocumentType
