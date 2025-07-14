@@ -171,7 +171,10 @@ public struct NorgLexer {
         }
 
         if idx < text.endIndex {
-            tokens.append(.plain(String(text[idx...])))
+            // tokens.append(.plain(String(text[idx...])))
+            let fragment = String(text[idx...])
+            let trimmedLeading = String(fragment.drop(while: { $0.isWhitespace }))
+            tokens.append(.plain(trimmedLeading))
         }
 
         return tokens

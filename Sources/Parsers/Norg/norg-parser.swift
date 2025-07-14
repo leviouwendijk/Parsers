@@ -65,13 +65,13 @@ public struct NorgParser {
         _ s: String,
         if cond: Bool,
         to buf: NSMutableAttributedString,
-        conservativeSpace mitigatingDoubleSpaceInjection: Bool = true
+        // conservativeSpace mitigatingDoubleSpaceInjection: Bool = true
     ) {
         guard cond else { return }
         
-        if mitigatingDoubleSpaceInjection {
-            guard !(s == " " && buf.string.hasSuffix(" ")) else { return } 
-        }
+        // if mitigatingDoubleSpaceInjection {
+        //     guard !(s == " " && buf.string.hasSuffix(" ")) else { return } 
+        // }
 
         buf.append(NSAttributedString(string: s))
     }
