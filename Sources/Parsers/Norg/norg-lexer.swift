@@ -139,8 +139,14 @@ public struct NorgLexer {
 
         for m in matches {
             let before = text[idx..<text.index(text.startIndex, offsetBy: m.range.lowerBound)]
-            if !before.trimmingCharacters(in: .whitespaces).isEmpty {
-                tokens.append(.plain(String(before)))
+            // if !before.trimmingCharacters(in: .whitespaces).isEmpty {
+            //     tokens.append(.plain(String(before)))
+            // }
+
+            let rawBefore = String(before)
+            let trimmedBefore = rawBefore.trimmingCharacters(in: .whitespaces)
+            if !trimmedBefore.isEmpty {
+                tokens.append(.plain(rawBefore.collapsingDoubleSpaces()))
             }
 
             if let r = Range(m.range(at: 1), in: text) {
@@ -172,9 +178,10 @@ public struct NorgLexer {
 
         if idx < text.endIndex {
             // tokens.append(.plain(String(text[idx...])))
-            let fragment = String(text[idx...])
-            let trimmedLeading = String(fragment.drop(while: { $0.isWhitespace }))
-            tokens.append(.plain(trimmedLeading))
+
+            let rawTail = String(text[idx...])
+            let tail = String(rawTail.drop(while: { $0.isWhitespace }))
+            tokens.append(.plain(tail.collapsingDoubleSpaces()))
         }
 
         return tokens
