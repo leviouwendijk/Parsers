@@ -60,6 +60,7 @@ public struct NorgParser {
                 result.append(
                     NSAttributedString(string: "\n\n")
                 )
+                continue
 
             case .inlineFootnoteReference(let ref):
                 result.append(
