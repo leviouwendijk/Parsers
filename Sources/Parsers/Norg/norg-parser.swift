@@ -51,7 +51,7 @@ public struct NorgParser {
                 let size = NSFont.systemFontSize + CGFloat(max(6 - lvl, 0))
                 result.append(
                     NSAttributedString(
-                        string: txt.trimmingCharacters(in: .whitespaces) + "\n",
+                        string: txt.trimmingCharacters(in: .whitespaces), // + "\n",
                         attributes: [.font: NSFont.boldSystemFont(ofSize: size)]
                     )
                 )
