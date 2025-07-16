@@ -58,9 +58,8 @@ public struct NorgParser {
 
             case .emptyLine:
                 result.append(
-                    NSAttributedString(string: "\n\n")
+                    NSAttributedString(string: "\n")
                 )
-                continue
 
             case .inlineFootnoteReference(let ref):
                 result.append(
