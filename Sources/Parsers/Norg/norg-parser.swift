@@ -19,6 +19,11 @@ public struct NorgParser {
                     NSAttributedString(string: ws)
                 )
 
+            case .lineBreak:
+                result.append(
+                    NSAttributedString(string: "\n")
+                )
+
             case .bold(let txt):
                 result.append(
                     NSAttributedString(

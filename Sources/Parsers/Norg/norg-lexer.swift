@@ -116,6 +116,8 @@ public struct NorgLexer {
                 let inline = parseInlineFormatting(line, verbose: verbose)
                 tokens.append(contentsOf: inline)
             }
+
+            tokens.append(.lineBreak) // adding linebreaks
         }
 
         if isMulti {

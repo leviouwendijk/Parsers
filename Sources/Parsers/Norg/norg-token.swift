@@ -5,6 +5,7 @@ public enum NorgToken: CustomStringConvertible {
     case italic(String)
     case plain(String)
     case whitespace(String)
+    case lineBreak
     case header(String)
     case emptyLine
     case inlineFootnoteReference(String)
@@ -17,6 +18,7 @@ public enum NorgToken: CustomStringConvertible {
         case .italic(let text): return "Italic(\"\(text)\")"
         case .plain(let text): return "Plain(\"\(text)\")"
         case .whitespace(let s): return "Whitespace(\"\(s)\")"
+        case .lineBreak: return "LineBreak"
         case .header(let text): return "Header(\"\(text)\")"
         case .emptyLine: return "EmptyLine"
         case .inlineFootnoteReference(let ref): return "InlineFoot(\"\(ref)\")"
