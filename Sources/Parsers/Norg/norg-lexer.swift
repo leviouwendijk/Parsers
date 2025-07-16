@@ -100,6 +100,7 @@ public struct NorgLexer {
 
             if line.isEmpty {
                 tokens.append(.emptyLine)
+                continue
             } else if let hdr = matchHeader(line) {
                 tokens.append(.header(hdr))
             } else if let foot = matchFootnote(line) {
