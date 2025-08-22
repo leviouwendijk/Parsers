@@ -28,7 +28,9 @@ public struct MarkdownLexer {
 
     public func tokenize() -> [MarkdownToken] {
         var tokens: [MarkdownToken] = []
-        var lines = text.components(separatedBy: "\n")
+        // var lines = text.components(separatedBy: "\n")
+        let pre = decodeHTMLEntities(text).replacingOccurrences(of: "\u{00A0}", with: " ")
+        var lines = pre.components(separatedBy: "\n")
 
         if options.trimLeadingNewlines {
             while let first = lines.first, first.trimmingCharacters(in: .whitespaces).isEmpty { lines.removeFirst() }
