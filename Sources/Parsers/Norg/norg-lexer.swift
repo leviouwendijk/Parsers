@@ -43,8 +43,8 @@ public struct NorgLexer {
     public func tokenize() -> [NorgToken] {
         var tokens: [NorgToken] = []
 
-        let cleaned = text.strippingNorgMetadata
-        let formatted = cleaned.emDashedFromHyphens()
+        let pre = decodeHTMLEntities(text).replacingOccurrences(of: "\u{00A0}", with: " ")
+        let formatted = pre.emDashedFromHyphens()
         var lines = formatted.splitByNewlines
 
         if options.trimLeadingNewlines {
