@@ -14,6 +14,7 @@ let package = Package(
             targets: ["Parsers"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.2.0"),
         .package(
             url: "https://github.com/leviouwendijk/plate.git",
             branch: "master"
@@ -47,6 +48,7 @@ let package = Package(
         .testTarget(
             name: "ParsersTests",
             dependencies: [
+                .product(name: "Testing", package: "swift-testing"),
                 "Parsers",
                 .product(name: "plate", package: "plate"),
                 .product(name: "Structures", package: "Structures"),
