@@ -119,6 +119,16 @@ public struct Lexer: Lexing {
         case "\\": advance(); return .backward_slash
         case "'": advance(); return .single_quote
         case "\"": advance(); return .double_quote // (unreachable here because we handle strings above)
+        case "@": advance(); return .at
+        case "%": advance(); return .percent
+        case "*": advance(); return .asterisk
+        case "&": advance(); return .ampersand
+        case "+": advance(); return .plus
+        case "_": advance(); return .underscore
+        case "~": advance(); return .tilde
+        case ":": advance(); return .colon
+        case ";": advance(); return .semicolon
+        case "|": advance(); return .pipe
         default: break
         }
 

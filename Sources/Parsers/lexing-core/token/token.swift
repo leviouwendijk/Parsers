@@ -23,14 +23,29 @@ public enum Token: Equatable, Sendable {
     case right_bracket               // ]
     case less_than                   // <
     case greater_than                // >
+
     case arrow                       // ->
     case dot                         // .
     case equals                      // =
     case comma                       // ,
     case hash                        // #
     case dollar                      // $
+
+    case at                          // @
+    case percent                     // %
+    case asterisk                    // *
+    case ampersand                   // &
+    case plus                        // +
+    case dash                        // -
+    case underscore                  // _
+    case tilde                       // ~
+    case colon                       // :
+    case semicolon                   // ;
+    case pipe                        // |
+
     case forward_slash               // /
     case backward_slash              // \
+
     case double_quote                // "
     case single_quote                // '
 
@@ -62,6 +77,17 @@ public enum Token: Equatable, Sendable {
         case .comma:                      return ","
         case .hash:                       return "#"
         case .dollar:                     return "$"
+        case .at:                         return "@"
+        case .percent:                    return "%"
+        case .asterisk:                   return "*"
+        case .ampersand:                  return "&"
+        case .plus:                       return "+"
+        case .dash:                       return "-"
+        case .underscore:                 return "_"
+        case .tilde:                      return "~"
+        case .colon:                      return ":"
+        case .semicolon:                  return ";"
+        case .pipe:                       return "|"
         case .forward_slash:              return "/"
         case .backward_slash:             return "\\"
         case .double_quote:               return "\""
@@ -89,7 +115,9 @@ public enum Token: Equatable, Sendable {
              .less_than, .greater_than,
              .left_bracket, .right_bracket, .arrow, .dot, .equals, .comma,
              .hash, .dollar, .forward_slash, .backward_slash,
-             .double_quote, .single_quote: 
+             .double_quote, .single_quote, 
+             .at, .percent, .asterisk, .ampersand, .plus, .dash,
+             .underscore, .tilde, .colon, .semicolon, .pipe:
              return true
 
         default: 
@@ -129,6 +157,19 @@ public enum Token: Equatable, Sendable {
              (.comment_line, .comment_line),
              (.comment_block, .comment_block): 
              return true
+
+        case (.at, .at),
+             (.percent, .percent),
+             (.asterisk, .asterisk),
+             (.ampersand, .ampersand),
+             (.plus, .plus),
+             (.dash, .dash),
+             (.underscore, .underscore),
+             (.tilde, .tilde),
+             (.colon, .colon),
+             (.semicolon, .semicolon),
+             (.pipe, .pipe):
+            return true
 
         default: 
             return false
