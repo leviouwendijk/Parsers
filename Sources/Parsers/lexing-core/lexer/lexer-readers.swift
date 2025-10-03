@@ -1,9 +1,6 @@
 import Foundation
 
 public extension Lexer {
-
-
-
     mutating func readQuotedLiteral() -> String {
         // assumes opening " already consumed
         var out = String.UnicodeScalarView()
@@ -89,47 +86,6 @@ public extension Lexer {
         }
         return s
     }
-
-    // mutating func readUntilClosing(
-    //     delimiter: Delimiter,
-    //     options: BlockStringOptions
-    // ) -> String {
-    //     var depth = 1               // we've already consumed the first start
-    //     var out = String.UnicodeScalarView()
-
-    //     while let _ = peek() {
-    //         // end?
-    //         if match(delimiter.end) {
-    //             depth -= 1
-    //             if depth == 0 { break }
-    //             // if nested, keep the inner closing text (common behavior in verbatim mode)
-    //             out.append(contentsOf: delimiter.end.unicodeScalars)
-    //             continue
-    //         }
-    //         // nested start?
-    //         if delimiter.allowsNesting, match(delimiter.start) {
-    //             depth += 1
-    //             out.append(contentsOf: delimiter.start.unicodeScalars)
-    //             continue
-    //         }
-    //         // otherwise, copy one scalar and advance
-    //         if let u = peek() { out.append(u); advance() }
-    //     }
-
-    //     var s = String(out)
-
-    //     if options.normalizeNewlines {
-    //         // normalize CRLF and CR to LF
-    //         s = s.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
-    //     }
-    //     if options.trimWhitespace {
-    //         s = s.trimmingCharacters(in: .whitespacesAndNewlines)
-    //     }
-    //     if options.unquoteIfWrapped, s.count >= 2, s.first == "\"", s.last == "\"" {
-    //         s = unescapeQuotedPayload(String(s.dropFirst().dropLast()), options: options)
-    //     }
-    //     return s
-    // }
 
     @inline(__always)
     mutating func unescapeQuotedPayload(_ payload: String, options: BlockStringOptions) -> String {
@@ -232,6 +188,20 @@ public extension Lexer {
         let raw = String(buf)
         return (raw, Decimal(string: raw) ?? 0)
     }
+
+    // @inlinable
+    // mutating func readInteger() throws -> Int {
+    //     // assuming lexer already has readNumberRawAndValue()
+    //     let (raw, dec) = readNumberRawAndValue()
+    //     // dec is Decimal
+    //     var intValue = NSDecimalNumber(decimal: dec).intValue
+    //     // verify no fractional part
+    //     let fractional = dec - Decimal(intValue)
+    //     if fractional != Decimal(0) {
+    //         throw ParserError.unexpectedToken(.number(dec, raw: raw), expected: "integer", at: loc())
+    //     }
+    //     return intValue
+    // }
 
     mutating func readIdent() -> String {
         var buf = String.UnicodeScalarView()

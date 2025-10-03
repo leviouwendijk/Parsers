@@ -51,6 +51,8 @@ public enum Token: Equatable, Sendable {
 
     case eof
 
+    case error(String, at: SourceLocation)
+
     // convenience text
     public func string() -> String {
         switch self {
@@ -93,6 +95,7 @@ public enum Token: Equatable, Sendable {
         case .double_quote:               return "\""
         case .single_quote:               return "'"
         case .eof:                        return "\0"
+        case .error(let msg, let at):     return "\(msg) (at: \(at))"
         }
     }
 

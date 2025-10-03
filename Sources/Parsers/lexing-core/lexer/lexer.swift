@@ -1,5 +1,18 @@
 import Foundation
 
+public enum LexerErrorStrategy: Sendable {
+    case throwing
+    case error_token
+    // case diagnose_only(@Sendable (String, SourceLocation) -> Void)
+}
+
+public struct LexerConfig: Sendable {
+    public var errorStrategy: LexerErrorStrategy = .throwing
+    public var unescapeStringsInLexer = true
+    
+    public init() {}
+}
+
 public struct Lexer: Lexing {
     public let scalars: [UnicodeScalar]
     public var index: Int = 0
@@ -12,11 +25,18 @@ public struct Lexer: Lexing {
 
     public let sets: LexingSets
     public let options: LexerOptions
+    public let config: LexerConfig
 
-    public init(source: String, sets: LexingSets, options: LexerOptions = .init()) {
+    public init(
+        source: String,
+        sets: LexingSets,
+        options: LexerOptions = .init(),
+        config: LexerConfig = .init()
+    ) {
         self.scalars = Array(source.unicodeScalars)
         self.sets = sets
         self.options = options
+        self.config = config
     }
 
     public mutating func nextToken() -> Token {
@@ -178,6 +198,28 @@ public struct Lexer: Lexing {
         case ")": return .right_parenthesis
         case ">": return .greater_than
         default:  return .right_brace
+        }
+    }
+
+    @inlinable
+    public func loc(file: String? = nil, columnOverride: Int? = nil) -> SourceLocation {
+        SourceLocation(
+            file: file,
+            line: self.line,
+            column: columnOverride ?? self.column,
+            invocation: nil
+        )
+    }
+
+    @inline(__always)
+    mutating func error(_ msg: String, at loc: SourceLocation) throws -> Token {
+        switch config.errorStrategy {
+        case .throwing:
+            throw LexerError.message(msg, at: loc)
+        case .error_token:
+            return .error(msg, at: loc)
+        // case .diagnose_only(let sink):
+        //     sink(msg, loc)
         }
     }
 }
