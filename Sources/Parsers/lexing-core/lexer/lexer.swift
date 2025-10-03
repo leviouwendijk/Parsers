@@ -1,18 +1,5 @@
 import Foundation
 
-public enum LexerErrorStrategy: Sendable {
-    case throwing
-    case error_token
-    // case diagnose_only(@Sendable (String, SourceLocation) -> Void)
-}
-
-public struct LexerConfig: Sendable {
-    public var errorStrategy: LexerErrorStrategy = .throwing
-    public var unescapeStringsInLexer = true
-    
-    public init() {}
-}
-
 public struct Lexer: Lexing {
     public let scalars: [UnicodeScalar]
     public var index: Int = 0
@@ -212,14 +199,15 @@ public struct Lexer: Lexing {
     }
 
     @inline(__always)
-    mutating func error(_ msg: String, at loc: SourceLocation) throws -> Token {
+    mutating func error(_ msg: String) throws -> Token {
+        let loc = loc()
         switch config.errorStrategy {
         case .throwing:
             throw LexerError.message(msg, at: loc)
         case .error_token:
             return .error(msg, at: loc)
-        // case .diagnose_only(let sink):
-        //     sink(msg, loc)
+        case .diagnose_only(let sink):
+            sink(msg, loc); return .eof
         }
     }
 }

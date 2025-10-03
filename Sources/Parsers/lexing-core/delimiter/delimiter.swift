@@ -18,4 +18,3 @@ public struct Delimiter: Sendable, Equatable {
         self.start = start; self.end = end; self.allowsNesting = allowsNesting
     }
 }
-
