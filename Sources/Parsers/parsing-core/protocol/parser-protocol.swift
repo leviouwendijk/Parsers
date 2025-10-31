@@ -38,14 +38,26 @@ public extension Parser {
     }
 
     /// Try `self`; if it fails, try `other`. Type-erased so `other` may be existential.
+    // @inlinable
+    // func orElse(_ other: any Parser<Output>) -> AnyParser<Output> {
+    //     let a = AnyParser(self)
+    //     let b = AnyParser(other)
+    //     return AnyParser<Output> { c in
+    //         switch a.parse(c) {
+    //         case .success:             return a.parse(c)
+    //         case .failure:             return b.parse(c)
+    //         }
+    //     }
+    // }
+
     @inlinable
     func orElse(_ other: any Parser<Output>) -> AnyParser<Output> {
-        let a = AnyParser(self)
-        let b = AnyParser(other)
+        let a = AnyParser(self), b = AnyParser(other)
         return AnyParser<Output> { c in
-            switch a.parse(c) {
-            case .success:             return a.parse(c)
-            case .failure:             return b.parse(c)
+            let first = a.parse(c)
+            switch first {
+            case .success: return first
+            case .failure: return b.parse(c)
             }
         }
     }
