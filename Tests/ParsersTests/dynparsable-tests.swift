@@ -68,24 +68,33 @@ private func docsPolicies() -> BlockPolicyTable {
     )
 }
 
-private let DocsLexingSets = LexingSets(
-    keywords: [
-        // top-level fields:
-        "article", "label", "hide", "version", "sort", "metadata", "body",
-        // atoms used in grammar:
-        "self", "true", "false"
-    ],
-    idents: [],
-    stringBlockKeywords: ["body"]
-)
+private func makeDocsLexingSets(fieldsAsKeywords: Bool) -> LexingSets {
+    let fieldNames = ["article", "label", "hide", "version", "sort", "metadata", "body"]
+    let atoms      = ["self", "true", "false"]
 
-private func makeDocsCursor(_ source: String) -> TokenCursor {
+    if fieldsAsKeywords {
+        return LexingSets(
+            keywords: Set(fieldNames + atoms),
+            idents: [],
+            stringBlockKeywords: ["body"]
+        )
+    } else {
+        // Only keep truly special atoms as keywords; fields come in as identifiers.
+        return LexingSets(
+            keywords: Set(atoms),
+            idents: Set(fieldNames),
+            stringBlockKeywords: ["body"]
+        )
+    }
+}
+
+private func makeDocsCursor(_ source: String, sets: LexingSets) -> TokenCursor {
     var opts = LexerOptions()
     opts.emit_whitespace = false
-    opts.emit_comments = false
-    opts.emit_newlines = true            // fields separated by newline/semicolon
+    opts.emit_comments   = false
+    opts.emit_newlines   = true
     opts.block_string_policies = docsPolicies()
-    var lx = Lexer(source: source, sets: DocsLexingSets, options: opts)
+    var lx = Lexer(source: source, sets: sets, options: opts)
     let (tokens, lines) = lx.collectAllTokensWithLineMap()
     return TokenCursor(tokens, lineMap: lines, filePath: "fixtures/article.hdoc")
 }
@@ -95,26 +104,29 @@ extension ArticleDef: DynamicallyParsable {
     public static func parserComponents() -> ParserComponents {
         var pc = ParserComponents.basic()
 
-        // body payload (lexer already emitted one string token for `body { … }`)
-        pc.register("bodyPayload") { stringBlock("body") }
+        // body { ... } → .map(["raw": .string])
+        pc.register("bodyPayload") {
+            let p: AnyTokenParser<SyntaxNode> =
+                TokenParsers.braces(TokenParsers.string())
+                .map { s in SyntaxNode.map(["raw": .string(s)]) }
+                .trace("bodyPayload")
+            return p
+        }
 
-        // true/false as atoms (prefer keywords, allow bare identifiers too)
         pc.register("boolAtom") {
             let kwTrue  = TokenParsers.keyword(.raw("true")).map { SyntaxNode.atom("true") }
             let kwFalse = TokenParsers.keyword(.raw("false")).map { SyntaxNode.atom("false") }
-            let kw      = kwTrue.orElse(kwFalse)
-
             let ident   = TokenParsers.identifier().map { SyntaxNode.atom($0) }
-            return kw.orElse(ident)
+            return kwTrue.orElse(kwFalse).orElse(ident).trace("boolAtom")
         }
 
-        // ["a","b","c"] → .list(.string)
         pc.register("stringArray") {
             let item = TokenParsers.string().map(SyntaxNode.string)
-            return TokenParsers.brackets(separatedList(item: item, sep: .comma)).map(SyntaxNode.list)
+            return TokenParsers.brackets(separatedList(item: item, sep: .comma))
+                .map(SyntaxNode.list)
+                .trace("stringArray")
         }
 
-        // article(self|"<id>"|ident) → .map(["id": .string(..)])
         pc.register("articleHead") {
             let selfString = TokenParsers.keyword(.raw("self")).map { "self" }
             let stringOrId = AnyTokenParser<String> { ctx in
@@ -124,13 +136,106 @@ extension ArticleDef: DynamicallyParsable {
             }
             let idOrSelf = selfString.orElse(stringOrId)
             let inner    = idOrSelf.map { SyntaxNode.map(["id": .string($0)]) }
-
-            // optionally consume leading `article` keyword, then parens:
             return optTokenWhere({ if case .keyword("article") = $0 { return true }; return false },
                                  then: TokenParsers.parens(inner))
-                // absorb trailing blank lines so the next field starts clean:
                 .then(AnyTokenParser(Expect(.newline)).many(min: 0))
                 .map { iv, _ in iv }
+                .trace("articleHead")
+        }
+        // --- Explicit braced maps used by version/sort/metadata ---
+        // Helpers
+         @Sendable
+        func anyNumericValue() -> AnyTokenParser<SyntaxNode> {
+            let intP: AnyTokenParser<SyntaxNode> =
+                TokenParsers.number().flatMap { dec in
+                    AnyTokenParser<SyntaxNode> { c in
+                        let n = NSDecimalNumber(decimal: dec)
+                        if dec == Decimal(n.intValue) {
+                            return .success(.number(Decimal(n.intValue)), c)
+                        } else {
+                            return .success(.number(dec), c)
+                        }
+                    }
+                }
+            let atomInt: AnyTokenParser<SyntaxNode> =
+                TokenParsers.identifier().flatMap { s in
+                    AnyTokenParser<SyntaxNode> { c in
+                        if let v = Int(s) { return .success(.number(Decimal(v)), c) }
+                        return .failure(Diagnostic("expected int atom"))
+                    }
+                }
+            let strInt: AnyTokenParser<SyntaxNode> =
+                TokenParsers.string().flatMap { s in
+                    AnyTokenParser<SyntaxNode> { c in
+                        if let v = Int(s) { return .success(.number(Decimal(v)), c) }
+                        return .failure(Diagnostic("expected int string"))
+                    }
+                }
+            return intP.orElse(atomInt).orElse(strInt)
+        }
+
+        // version { key (=)? int }  — unknown keys allowed
+        pc.register("versionMap") {
+            // inner value
+            let val   = anyNumericValue()
+            let key   = TokenParsers.identifier()
+            let pair  = key.then(optEquals(then: val).orElse(val)).map { (k, v) in (k, v) }
+            let pairs = separatedList(item: pair, sep: .semicolonOrNewline)
+
+            // NEW: allow leading newlines inside the braces
+            let leadingNL = AnyTokenParser(Expect(.newline)).many(min: 0)
+            let inner     = leadingNL.then(pairs).map { _, xs in xs }
+
+            return TokenParsers.braces(inner)
+                .map { kvs in SyntaxNode.map(Dictionary(uniqueKeysWithValues: kvs)) }
+                .trace("versionMap")
+        }
+
+        // sort { primacy 90; … } or nested: sort { weights { primacy 10 } }
+        pc.register("sortMap") {
+            final class _Box<T>: @unchecked Sendable { var value: T! }
+            let box = _Box<AnyTokenParser<SyntaxNode>>()
+
+            // helper: { key (=)? value } with leading-NL tolerance
+            func mapParser(value: AnyTokenParser<SyntaxNode>) -> AnyTokenParser<SyntaxNode> {
+                let key   = TokenParsers.identifier()
+                let pair  = key.then(optEquals(then: value).orElse(value)).map { (k, v) in (k, v) }
+                let body  = separatedList(item: pair, sep: .semicolonOrNewline)
+                let lead  = AnyTokenParser(Expect(.newline)).many(min: 0) // NEW
+                let inner = lead.then(body).map { _, xs in xs }           // NEW
+                return TokenParsers.braces(inner)
+                    .map { kvs in SyntaxNode.map(Dictionary(uniqueKeysWithValues: kvs)) }
+            }
+
+            // value := number | map(value)
+            let numberValue = anyNumericValue()
+            let mapValue    = mapParser(value: AnyTokenParser { c in box.value.parse(c) })
+            let valueBody   = numberValue.orElse(mapValue)
+            box.value       = valueBody
+
+            return mapParser(value: valueBody).trace("sortMap")
+        }
+
+        // metadata { published_at "…"; duration_minutes 8; tags ["a","b"] }
+        pc.register("metadataMap") {
+            let str   = TokenParsers.string().map(SyntaxNode.string)
+            let num   = anyNumericValue()
+            let list  = TokenParsers.brackets(
+                separatedList(item: TokenParsers.string().map(SyntaxNode.string), sep: .comma)
+            ).map(SyntaxNode.list)
+
+            let value = str.orElse(num).orElse(list)
+            let key   = TokenParsers.identifier()
+            let pair  = key.then(optEquals(then: value).orElse(value)).map { (k, v) in (k, v) }
+            let body  = separatedList(item: pair, sep: .semicolonOrNewline)
+
+            // NEW: allow leading newlines inside braces
+            let lead  = AnyTokenParser(Expect(.newline)).many(min: 0)
+            let inner = lead.then(body).map { _, xs in xs }
+
+            return TokenParsers.braces(inner)
+                .map { kvs in SyntaxNode.map(Dictionary(uniqueKeysWithValues: kvs)) }
+                .trace("metadataMap")
         }
 
         return pc
@@ -140,52 +245,56 @@ extension ArticleDef: DynamicallyParsable {
         GrammarNode(
             name: "articleDef",
             opener: nil,
-            delimiter: .none,              // flat header
+            delimiter: .none,
             order: .unordered,
             fields: [
-                // article(self)
                 GrammarField("article", .val("articleHead"), multiplicity: .one),
-
                 GrammarField("label", .val("string"), multiplicity: .optional()),
                 GrammarField("hide",  .val("boolAtom"), multiplicity: .optional()),
 
-                // version { major 0; minor 1; patch 0 }   (accept ints/numbers/strings; unknown keys ok)
-                GrammarField("version",
-                             .map(.val("int"), sep: .semicolonOrNewline, allowUnknownKeys: true),
-                             multiplicity: .optional()),
+                // // Accept ints inside version{}; unknown keys ok
+                // GrammarField("version",
+                //              .map(.val("int"), sep: .semicolonOrNewline, allowUnknownKeys: true),
+                //              multiplicity: .optional()),
 
-                // sort { primacy 90; ... }   (numbers/ints or nested numeric map; unknown keys ok)
-                GrammarField("sort",
-                             .map(.oneOf([.val("int"), .val("number"),
-                                          .map(.oneOf([.val("int"), .val("number")]))]),
-                                  sep: .semicolonOrNewline, allowUnknownKeys: true),
-                             multiplicity: .optional()),
+                // // Accept numbers/ints or nested numeric maps; unknown keys ok
+                // GrammarField("sort",
+                //              .map(.oneOf([.val("int"), .val("number"),
+                //                           .map(.oneOf([.val("int"), .val("number")]))]),
+                //                   sep: .semicolonOrNewline, allowUnknownKeys: true),
+                //              multiplicity: .optional()),
 
-                // metadata { published_at "..."; duration_minutes 8; tags ["a","b"] }
-                GrammarField("metadata",
-                             .map(.oneOf([.val("string"), .val("int"), .val("stringArray")]),
-                                  sep: .semicolonOrNewline, allowUnknownKeys: true),
-                             multiplicity: .optional()),
+                // // metadata { published_at "..."; duration_minutes 8; tags ["a","b"] }
+                // GrammarField("metadata",
+                //              .map(.oneOf([.val("string"), .val("int"), .val("stringArray")]),
+                //                   sep: .semicolonOrNewline, allowUnknownKeys: true),
+                //              multiplicity: .optional()),
 
-                GrammarField("body", .val("bodyPayload"), multiplicity: .optional())
+                GrammarField("body", .val("bodyPayload"), multiplicity: .optional()),
+
+                GrammarField("version",  .val("versionMap"),  multiplicity: .optional()),
+                GrammarField("sort",     .val("sortMap"),     multiplicity: .optional()),
+                GrammarField("metadata", .val("metadataMap"), multiplicity: .optional()),
             ],
             validate: nil
         )
     }
 
-    public static func makeCursor(for source: String) -> TokenCursor { makeDocsCursor(source) }
+    // public static func makeCursor(for source: String) -> TokenCursor { makeDocsCursor(source) }
+
+    public static func makeCursor(for source: String) -> TokenCursor {
+        let sets = makeDocsLexingSets(fieldsAsKeywords: true)
+        return makeDocsCursor(source, sets: sets)
+    }
 
     public static func fromSyntax(_ node: SyntaxNode) throws -> Self {
         guard case let .map(m) = node else {
             throw NSError(domain: "ArticleDef", code: 1, userInfo: [NSLocalizedDescriptionKey: "expected map"])
         }
-
-        // article.id
         var declaredId: String? = nil
         if case let .map(hm)? = m["article"], case let .string(s)? = hm["id"] {
             declaredId = (s == "self") ? nil : s
         }
-
         let label: String? = { if case let .string(s)? = m["label"] { return s }; return nil }()
         let hide: Bool? = {
             if case let .atom(a)? = m["hide"] { return a == "true" ? true : (a == "false" ? false : nil) }
@@ -281,8 +390,20 @@ extension ArticleDef: DynamicallyParsable {
             return ArticleMeta(published_at: published, duration_minutes: duration, tags: tags)
         }()
 
+        // let body: [BodyNode] = {
+        //     if case let .string(s)? = m["body"] { return [.raw(s)] }
+        //     return []
+        // }()
+
+        // body: [BodyNode]
         let body: [BodyNode] = {
-            if case let .string(s)? = m["body"] { return [.raw(s)] }
+            if case let .string(s)? = m["body"] {           // bare string variant
+                return [.raw(s)]
+            }
+            if case let .map(bm)? = m["body"],              // map { raw: "..." } variant
+               case let .string(s)? = bm["raw"] {
+                return [.raw(s)]
+            }
             return []
         }()
 
@@ -293,8 +414,8 @@ extension ArticleDef: DynamicallyParsable {
     }
 }
 
+// === Helpers ===
 private func collapseBlankLines(_ s: String) -> String {
-    // turn 2+ blank lines (with optional whitespace) into a single "\n"
     let pattern = #"\n[ \t]*\n+"#
     return s.replacingOccurrences(of: pattern, with: "\n", options: .regularExpression)
 }
