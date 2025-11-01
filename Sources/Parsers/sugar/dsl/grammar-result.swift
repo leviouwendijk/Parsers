@@ -1,6 +1,6 @@
 import Foundation
 
-public enum GResult: Sendable {
+public enum GrammarResult: Sendable {
     case object(name: String, fields: [String: [SyntaxNode]])
     case list([SyntaxNode])
     case map([String: SyntaxNode])
@@ -8,7 +8,7 @@ public enum GResult: Sendable {
 }
 
 public enum GrammarCompiler {
-    public static func compile(_ grammar: Grammar, node name: String) -> AnyTokenParser<GResult> {
+    public static func compile(_ grammar: Grammar, node name: String) -> AnyTokenParser<GrammarResult> {
         AnyTokenParser { ctx in
             guard let spec = grammar.nodes[name] else {
                 return .failure(Diagnostic("Unknown node: \(name)"))
@@ -17,11 +17,11 @@ public enum GrammarCompiler {
         }
     }
 
-    // Turn a GValue into AnyTokenParser<SyntaxNode>
-    private static func compileValue(_ g: Grammar, _ v: GValue) -> AnyTokenParser<SyntaxNode> {
+    // Turn a GrammarValue into AnyTokenParser<SyntaxNode>
+    private static func compileValue(_ g: Grammar, _ v: GrammarValue) -> AnyTokenParser<SyntaxNode> {
         switch v {
         case .val(let nm):
-            // if let p: AnyTokenParser<String>  = g.values.make(nm) { return p.map(SyntaxNode.string) }
+            // if let p: AnyTokenParser<String>  = g.values.make(nm) { return p.map(SyntaxNode.string) }grammar
             if let p: AnyTokenParser<String>  = g.values.make(nm) {
                 // Identifiers should stay atoms, not strings.
                 if nm == "ident" { return p.map(SyntaxNode.atom) }
@@ -49,7 +49,8 @@ public enum GrammarCompiler {
             return delimited(
                 .braces,
                 body: pair
-                    .then(separator(sep).optional())    // ((String,SyntaxNode), Void?)
+                    // .then(separator(sep).optional())    // ((String,SyntaxNode), Void?)
+                    .then(separator(sep).many(min: 0))
                     .many(min: 0)
                     .map { $0.map { $0.0 } }            // [(String, SyntaxNode)]
             )
@@ -70,14 +71,14 @@ public enum GrammarCompiler {
         }
     }
 
-    private static func buildNodeParser(_ g: Grammar, _ n: GNode) -> AnyTokenParser<GResult> {
+    private static func buildNodeParser(_ g: Grammar, _ n: GrammarNode) -> AnyTokenParser<GrammarResult> {
         // Optional opener keyword
         let withOpener: AnyTokenParser<Void> =
             (n.opener != nil) ? TokenParsers.keyword(n.opener!).map { () }
                               : AnyTokenParser { .success((), $0) }
 
         // // Build a parser for a single declared field
-        // func fieldShape(_ f: GField) -> AnyTokenParser<(String, [SyntaxNode])> {
+        // func fieldShape(_ f: GrammarField) -> AnyTokenParser<(String, [SyntaxNode])> {
         //     let key = TokenParsers.keyword(.raw(f.name)).map { () }
         //     let val = compileValue(g, f.value)
 
@@ -107,7 +108,7 @@ public enum GrammarCompiler {
         //     }
         // }
 
-         func fieldShape(_ f: GField) -> AnyTokenParser<(String, [SyntaxNode])> {
+         func fieldShape(_ f: GrammarField) -> AnyTokenParser<(String, [SyntaxNode])> {
              let key = TokenParsers.keyword(.raw(f.name)).map { () }
             let val = compileValue(g, f.value)
             // Support both "key value" and "key = value"
@@ -131,17 +132,45 @@ public enum GrammarCompiler {
         let body: AnyTokenParser<[(String, [SyntaxNode])]>
         switch n.order {
         case .unordered:
-            // repeatedly parse any field; stop when no progress
+            // // repeatedly parse any field; stop when no progress
+            // let choices = n.fields.map { fieldShape($0) } // [(String, [SyntaxNode])]
+            // let seed: AnyTokenParser<(String, [SyntaxNode])> =
+            //     choices.first ?? AnyTokenParser { ctx in .success(("", []), ctx) }
+
+            // let one = choices.dropFirst().reduce(seed) { $0.orElse($1) }
+
+            // body = one
+            //     .then(separator(.semicolonOrNewline).optional()) // ((String,[SyntaxNode]), Void?)
+            //     .many(min: 0)
+            //     .map { $0.map { $0.0 } }                          // [(String, [SyntaxNode])]
+
+            // Repeatedly parse any field; allow BLANK LINES between fields.
             let choices = n.fields.map { fieldShape($0) } // [(String, [SyntaxNode])]
             let seed: AnyTokenParser<(String, [SyntaxNode])> =
                 choices.first ?? AnyTokenParser { ctx in .success(("", []), ctx) }
-
             let one = choices.dropFirst().reduce(seed) { $0.orElse($1) }
 
-            body = one
-                .then(separator(.semicolonOrNewline).optional()) // ((String,[SyntaxNode]), Void?)
+            // Treat runs of '\n' as valid inter-field separators.
+            let newline   = AnyTokenParser(Expect(.newline))
+            let blankRun  = newline.many(min: 1).map { _ in () }
+            let trailingSep = separator(.semicolonOrNewline)
+                .orElse(blankRun)                    // ; | \n | \n\n...
                 .many(min: 0)
-                .map { $0.map { $0.0 } }                          // [(String, [SyntaxNode])]
+                .map { _ in () }
+
+            // Skip any leading blank lines before attempting the next field.
+            let oneField = blankRun.many(min: 0)
+                .then(one)
+                .then(trailingSep)
+                // tuple shape is: (([()], (String, [SyntaxNode])), ())
+                // we want the inner (String, [SyntaxNode])
+                .map { t in t.0.1 }
+
+            // Prevent stalls (wrap with the free function, not a method call)
+            let oneFieldNP = requireProgress(oneField)
+
+            // Collect
+            body = oneFieldNP.many(min: 0)
 
         case .ordered:
             let parts = n.fields.map { f -> AnyTokenParser<(String, [SyntaxNode])> in fieldShape(f) }
@@ -207,12 +236,12 @@ public enum GrammarCompiler {
             // if let validate = n.validate {
             //     let diags = validate(bucket)
             //     if let d = diags.first {
-            //         return AnyTokenParser<GResult> { _ in .failure(d) }
+            //         return AnyTokenParser<GrammarResult> { _ in .failure(d) }
             //     }
             // }
 
             // let frozen = bucket
-            // return AnyTokenParser<GResult> { ctx in
+            // return AnyTokenParser<GrammarResult> { ctx in
             //     .success(.object(name: n.name, fields: frozen), ctx)
             // }
 
@@ -236,7 +265,7 @@ public enum GrammarCompiler {
             }
 
             let frozen = bucket
-            return AnyTokenParser<GResult> { ctx in
+            return AnyTokenParser<GrammarResult> { ctx in
                 .success(.object(name: n.name, fields: frozen), ctx)
             }
 

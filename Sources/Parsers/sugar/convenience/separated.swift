@@ -3,7 +3,7 @@ import Foundation
 @inlinable
 public func sepBy1<T: Sendable>(
     _ item: AnyTokenParser<T>,
-    sep: GSep
+    sep: GrammarSeparator
 ) -> AnyTokenParser<[T]> {
     let s = separator(sep)
     return item.then( s.keep(item).many(min: 0) ).map { first, rest in [first] + rest }
@@ -12,7 +12,7 @@ public func sepBy1<T: Sendable>(
 // @inlinable
 // public func sepEndBy<T: Sendable>(
 //     _ item: AnyTokenParser<T>,
-//     sep: GSep
+//     sep: GrammarSeparator
 // ) -> AnyTokenParser<[T]> {
 //     let s = separator(sep).optional()
 //     return item.then(s).many(min: 0).map { $0.map { $0.0 } }
@@ -21,7 +21,7 @@ public func sepBy1<T: Sendable>(
 @inlinable
 public func sepEndBy<T: Sendable>(
     _ item: AnyTokenParser<T>,
-    sep: GSep
+    sep: GrammarSeparator
 ) -> AnyTokenParser<[T]> {
     let s = separator(sep)
     let s1 = s.many(min: 1)  // one-or-more separators

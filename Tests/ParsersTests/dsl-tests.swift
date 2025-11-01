@@ -30,7 +30,7 @@ func grammar_map_and_list_values() async throws {
     let pc = ParserComponents.basic()
     // ensure "string" exists (it does in .basic())
     // build node spec that maps to SyntaxNode.map
-    let node = GNode(
+    let node = GrammarNode(
         name: "pairs",
         opener: .raw("pairs"),
         delimiter: .braces,
@@ -38,7 +38,7 @@ func grammar_map_and_list_values() async throws {
         fields: [
             // treat whole body as a single "kv" map(String -> String)
             // then GrammarCompiler will fold into a GResult.object and then we can fold -> SyntaxNode.map
-            GField("kv", .map(.val("string"), sep: .semicolon, allowUnknownKeys: true), multiplicity: .one)
+            GrammarField("kv", .map(.val("string"), sep: .semicolon, allowUnknownKeys: true), multiplicity: .one)
         ]
     )
 
@@ -95,11 +95,11 @@ func grammar_optional_and_many_fields_validation() async throws {
 
     let pc = ParserComponents.basic()
     // treat "ident" as String
-    let idField  = GField("id",   .val("ident"), multiplicity: .optional())
-    let tagsField = GField("tags", .list(.val("ident"), sep: .comma), multiplicity: .one)
+    let idField  = GrammarField("id",   .val("ident"), multiplicity: .optional())
+    let tagsField = GrammarField("tags", .list(.val("ident"), sep: .comma), multiplicity: .one)
 
     // validator: require 'tags'
-    let node = GNode(
+    let node = GrammarNode(
         name: "widget",
         opener: .raw("widget"),
         delimiter: .braces,
@@ -146,13 +146,13 @@ func grammar_oneOf_paths() async throws {
     let cur = glex(src, keywords: ["thing","value"])
 
     let pc = ParserComponents.basic()
-    let node = GNode(
+    let node = GrammarNode(
         name: "thing",
         opener: .raw("thing"),
         delimiter: .braces,
         order: .unordered,
         fields: [
-            GField(
+            GrammarField(
                 "value",
                 .oneOf([.val("string"), .val("number")]),
                 multiplicity: .one
