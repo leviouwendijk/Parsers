@@ -1,5 +1,0 @@
---- precontext ---
-This is our Parsers test.
-- first assess problems in tests themselves
-- then consider if we may do a lot of savings by extending the original library
--- EO: precontext ---
