@@ -6,8 +6,19 @@ extension Prebuilt {
         /// - either "+<digits>" or "<digits>"
         public let rawValue: String
 
-        public init(_ value: String) throws {
+        public init(
+            _ value: String
+        ) throws {
             self = try PhoneParser.parse(value)
+        }
+
+        public init(
+            _ value: String?
+        ) throws {
+            guard let v = value else { 
+                throw RawInputValueError.empty(Self.self)
+            }
+            try self.init(v)
         }
 
         internal init(validated rawValue: String) {

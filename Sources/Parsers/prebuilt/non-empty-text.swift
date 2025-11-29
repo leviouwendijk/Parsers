@@ -4,8 +4,21 @@ extension Prebuilt {
     public struct NonEmptyText: Equatable, Sendable, Hashable, Codable {
         public let rawValue: String
 
-        public init(_ value: String, config: NonEmptyTextParser.Configuration = .init()) throws {
+        public init(
+            _ value: String,
+            config: NonEmptyTextParser.Configuration = .init()
+        ) throws {
             self = try NonEmptyTextParser.parse(value, config: config)
+        }
+
+        public init(
+            _ value: String?,
+            config: NonEmptyTextParser.Configuration = .init()
+        ) throws {
+            guard let v = value else { 
+                throw RawInputValueError.empty(Self.self)
+            }
+            try self.init(v, config: config)
         }
 
         internal init(validated rawValue: String) {

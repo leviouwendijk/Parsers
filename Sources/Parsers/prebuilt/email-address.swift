@@ -4,8 +4,19 @@ extension Prebuilt {
     public struct EmailAddress: Equatable, Sendable, Hashable, Codable {
         public let rawValue: String
 
-        public init(_ value: String) throws {
+        public init(
+            _ value: String
+        ) throws {
             self = try EmailParser.parse(value)
+        }
+
+        public init(
+            _ value: String?
+        ) throws {
+            guard let v = value else { 
+                throw RawInputValueError.empty(Self.self)
+            }
+            try self.init(v)
         }
 
         internal init(validated rawValue: String) {

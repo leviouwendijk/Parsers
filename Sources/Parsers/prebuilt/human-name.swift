@@ -8,6 +8,15 @@ extension Prebuilt {
             self = try HumanNameParser.parse(value).asName()
         }
 
+        public init(
+            _ value: String?
+        ) throws {
+            guard let v = value else { 
+                throw RawInputValueError.empty(Self.self)
+            }
+            try self.init(v)
+        }
+
         internal init(validated rawValue: String) {
             self.rawValue = rawValue
         }

@@ -4,8 +4,21 @@ extension Prebuilt {
     public struct HTMLCheckbox: Equatable, Sendable, Hashable, Codable {
         public let isChecked: Bool
 
-        public init(_ value: String?, config: HTMLCheckboxParser.Configuration = .init()) throws {
+        public init(
+            _ value: String,
+            config: HTMLCheckboxParser.Configuration = .init()
+        ) throws {
             self = try HTMLCheckboxParser.parse(value, config: config)
+        }
+
+        public init(
+            _ value: String?,
+            config: HTMLCheckboxParser.Configuration = .init()
+        ) throws {
+            guard let v = value else { 
+                throw RawInputValueError.empty(Self.self)
+            }
+            try self.init(v)
         }
 
         internal init(checked: Bool) {
