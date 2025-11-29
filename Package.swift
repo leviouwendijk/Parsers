@@ -48,7 +48,7 @@ let package = Package(
         .testTarget(
             name: "ParsersTests",
             dependencies: [
-                .product(name: "Testing", package: "swift-testing"),
+                // .product(name: "Testing", package: "swift-testing"),
                 "Parsers",
                 .product(name: "plate", package: "plate"),
                 .product(name: "Structures", package: "Structures"),
