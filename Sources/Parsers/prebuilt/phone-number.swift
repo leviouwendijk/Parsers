@@ -1,7 +1,7 @@
 import Foundation
 
 extension Prebuilt {
-    public struct PhoneNumber: Equatable, Sendable, Hashable {
+    public struct PhoneNumber: Equatable, Sendable, Hashable, Codable {
         /// Normalized phone number:
         /// - either "+<digits>" or "<digits>"
         public let rawValue: String

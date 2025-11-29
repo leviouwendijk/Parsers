@@ -1,7 +1,7 @@
 import Foundation
 
 extension Prebuilt {
-    public struct NonEmptyText: Equatable, Sendable, Hashable {
+    public struct NonEmptyText: Equatable, Sendable, Hashable, Codable {
         public let rawValue: String
 
         public init(_ value: String, config: NonEmptyTextParser.Configuration = .init()) throws {

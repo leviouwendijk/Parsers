@@ -1,7 +1,7 @@
 import Foundation
 
 extension Prebuilt {
-    public struct Honeypot: Equatable, Sendable, Hashable {
+    public struct Honeypot: Equatable, Sendable, Hashable, Codable {
         public init(_ value: String) throws {
             _ = try HoneypotParser.parse(value)
         }

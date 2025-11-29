@@ -1,7 +1,7 @@
 import Foundation
 
 extension Prebuilt {
-    public struct EmailAddress: Equatable, Sendable, Hashable {
+    public struct EmailAddress: Equatable, Sendable, Hashable, Codable {
         public let rawValue: String
 
         public init(_ value: String) throws {

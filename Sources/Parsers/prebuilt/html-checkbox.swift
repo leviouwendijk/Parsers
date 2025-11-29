@@ -1,7 +1,7 @@
 import Foundation
 
 extension Prebuilt {
-    public struct HTMLCheckbox: Equatable, Sendable, Hashable {
+    public struct HTMLCheckbox: Equatable, Sendable, Hashable, Codable {
         public let isChecked: Bool
 
         public init(_ value: String?, config: HTMLCheckboxParser.Configuration = .init()) throws {
