@@ -115,10 +115,6 @@ extension Prebuilt {
             digits.reserveCapacity(min(32, max(0, config.maxDigits)))
 
             while let ch = cursor.peek() {
-                if let s = ch.unicodeScalars.first, badScalar(s) {
-                    throw PhoneParserError.invalidCharacter(ch, location: loc(in: input, offset: cursor.offset))
-                }
-
                 if isDigit(ch) {
                     sawAnyDigit = true
                     digits.append(digitValue(ch))
@@ -135,14 +131,28 @@ extension Prebuilt {
                     continue
                 }
 
+                // Allow separators first (including spaces)
                 if config.allowedSeparators.contains(ch) {
                     cursor.advance()
                     continue
                 }
 
+                // Optional: ignore extension like "x123" or "#123" (and any separators after it)
                 if config.stopOnExtensionMarker, config.extensionMarkers.contains(ch) {
-                    // Stop parsing at extension marker (e.g. "x123", "#123")
+                    cursor.advance() // consume marker
+                    while let c2 = cursor.peek() {
+                        if isDigit(c2) || config.allowedSeparators.contains(c2) {
+                            cursor.advance()
+                            continue
+                        }
+                        break
+                    }
                     break
+                }
+
+                // Now reject control chars
+                if let s = ch.unicodeScalars.first, isControlScalar(s) {
+                    throw PhoneParserError.invalidCharacter(ch, location: loc(in: input, offset: cursor.offset))
                 }
 
                 throw PhoneParserError.invalidCharacter(ch, location: loc(in: input, offset: cursor.offset))
