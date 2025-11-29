@@ -1,11 +1,11 @@
 import Foundation
 
 extension Prebuilt {
-    public struct HumanName: Equatable, Sendable, Hashable, Codable {
+    public struct HumanFullName: Equatable, Sendable, Hashable, Codable {
         public let rawValue: String
 
         public init(_ value: String) throws {
-            self = try HumanNameParser.parse(value).asName()
+            self = try HumanFullNameParser.parse(value).asName()
         }
 
         public init(
@@ -21,15 +21,15 @@ extension Prebuilt {
             self.rawValue = rawValue
         }
 
-        fileprivate func asName() -> HumanName { self }
+        fileprivate func asName() -> HumanFullName { self }
     }
 
-    public struct HumanNameParser: Parser, Sendable {
-        public typealias Output = HumanName
+    public struct HumanFullNameParser: Parser, Sendable {
+        public typealias Output = HumanFullName
 
         public init() {}
 
-        public func parse(_ cursor: Cursor) -> ParseResult<HumanName> {
+        public func parse(_ cursor: Cursor) -> ParseResult<HumanFullName> {
             let cfg = NonEmptyTextParser.Configuration(
                 minLength: 2,
                 maxLength: 128,
@@ -39,13 +39,13 @@ extension Prebuilt {
 
             switch NonEmptyTextParser(config: cfg).parse(cursor) {
             case .success(let t, let rest):
-                return .success(HumanName(validated: t.rawValue), rest)
+                return .success(HumanFullName(validated: t.rawValue), rest)
             case .failure(let d):
                 return .failure(d)
             }
         }
 
-        public static func parse(_ input: String) throws -> HumanName {
+        public static func parse(_ input: String) throws -> HumanFullName {
             let cfg = NonEmptyTextParser.Configuration(
                 minLength: 2,
                 maxLength: 128,
@@ -53,7 +53,7 @@ extension Prebuilt {
                 allowNewlines: false
             )
             let t = try NonEmptyTextParser.parse(input, config: cfg)
-            return HumanName(validated: t.rawValue)
+            return HumanFullName(validated: t.rawValue)
         }
     }
 }
