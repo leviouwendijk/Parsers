@@ -40,4 +40,10 @@ public enum Prebuilt {
         let trimmed = (s ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
     }
+
+    public static func normalizeOptional(_ s: [String]?) -> [String]? {
+        guard let strings = s else { return nil }
+        let normalized =  strings.compactMap { normalizeOptional($0) }
+        return normalized.isEmpty ? nil : normalized
+   }
 }

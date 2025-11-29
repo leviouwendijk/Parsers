@@ -163,4 +163,35 @@ extension Prebuilt {
             )
         }
     }
+
+    public static func parseOptionalHumanNameComponents(
+        first_name: String?,
+        middle_names: [String]?,
+        infix: String?,
+        last_name: String?
+    ) throws -> HumanNameComponents? {
+        let f_n = normalizeOptional(first_name)
+        let m_n = normalizeOptional(middle_names)
+        let inf = normalizeOptional(infix)
+        let l_n = normalizeOptional(last_name)
+
+        var optionals: [String?] = [
+            f_n, inf, l_n
+        ]
+
+        m_n.ifNotNil { array in
+            optionals.append(contentsOf: array.map {$0} )
+        }
+
+        if optionals.allNil {
+            return nil
+        }
+
+        return try HumanNameComponents(
+            first: f_n,
+            middle_names: m_n,
+            infix: inf,
+            last: l_n
+        )
+    }
 }
