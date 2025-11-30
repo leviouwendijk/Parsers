@@ -1,6 +1,6 @@
 import Foundation
 import plate
-import Extensions
+// import Extensions
 
 public struct MarkdownLexerOptions {
     public let trimLeadingNewlines: Bool
