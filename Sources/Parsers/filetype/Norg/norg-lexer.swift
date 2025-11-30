@@ -1,6 +1,6 @@
 import Foundation
 import plate
-// import Extensions
+import Extensions
 
 public struct NorgLexerOptions {
     public let trimLeadingNewlines: Bool

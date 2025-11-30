@@ -23,10 +23,10 @@ let package = Package(
             url: "https://github.com/leviouwendijk/Structures.git",
             branch: "master"
         ),
-        // .package(
-        //     url: "https://github.com/leviouwendijk/Extensions.git",
-        //     branch: "master"
-        // ),
+        .package(
+            url: "https://github.com/leviouwendijk/Extensions.git",
+            branch: "master"
+        ),
         // .package(
         //     url: "https://github.com/leviouwendijk/Interfaces.git",
         //     branch: "master"
@@ -38,7 +38,7 @@ let package = Package(
             dependencies: [
                 .product(name: "plate", package: "plate"),
                 .product(name: "Structures", package: "Structures"),
-                // .product(name: "Extensions", package: "Extensions"),
+                .product(name: "Extensions", package: "Extensions"),
                 // .product(name: "Interfaces", package: "Interfaces"),
             ],
             resources: [
@@ -52,7 +52,7 @@ let package = Package(
                 "Parsers",
                 .product(name: "plate", package: "plate"),
                 .product(name: "Structures", package: "Structures"),
-                // .product(name: "Extensions", package: "Extensions"),
+                .product(name: "Extensions", package: "Extensions"),
                 // .product(name: "Interfaces", package: "Interfaces"),
             ]
         ),
