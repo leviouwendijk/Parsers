@@ -1,5 +1,6 @@
 import Foundation
-import plate
+import Methods
+// import plate
 // import Extensions
 
 public struct NorgLexerOptions {

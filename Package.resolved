@@ -1,13 +1,13 @@
 {
-  "originHash" : "1e821e2c5a5186a95f84261cf7539b406c5e338d0a693e93095e52fa0d49a538",
+  "originHash" : "605fc35c679dc8bdffd879591bf8b4b13e035190682dc15e1af4fada8e9447b6",
   "pins" : [
     {
-      "identity" : "plate",
+      "identity" : "methods",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/leviouwendijk/plate.git",
+      "location" : "https://github.com/leviouwendijk/Methods.git",
       "state" : {
         "branch" : "master",
-        "revision" : "9ae5f434b645b94adca307881598c635265527c3"
+        "revision" : "bddfab93235482cdd8b2deed7b38859531adece1"
       }
     }
   ],

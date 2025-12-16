@@ -15,8 +15,12 @@ let package = Package(
     ],
     dependencies: [
         // .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.2.0"),
+        // .package(
+        //     url: "https://github.com/leviouwendijk/plate.git",
+        //     branch: "master"
+        // ),
         .package(
-            url: "https://github.com/leviouwendijk/plate.git",
+            url: "https://github.com/leviouwendijk/Methods.git",
             branch: "master"
         ),
         // .package(
@@ -36,7 +40,8 @@ let package = Package(
         .target(
             name: "Parsers",
             dependencies: [
-                .product(name: "plate", package: "plate"),
+                // .product(name: "plate", package: "plate"),
+                .product(name: "Methods", package: "Methods"),
                 // .product(name: "Structures", package: "Structures"),
                 // .product(name: "Extensions", package: "Extensions"),
                 // .product(name: "Interfaces", package: "Interfaces"),
@@ -50,7 +55,7 @@ let package = Package(
             dependencies: [
                 // .product(name: "Testing", package: "swift-testing"),
                 "Parsers",
-                .product(name: "plate", package: "plate"),
+                // .product(name: "plate", package: "plate"),
                 // .product(name: "Structures", package: "Structures"),
                 // .product(name: "Extensions", package: "Extensions"),
                 // .product(name: "Interfaces", package: "Interfaces"),

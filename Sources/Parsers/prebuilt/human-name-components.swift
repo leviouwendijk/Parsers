@@ -1,4 +1,5 @@
 import Foundation
+import Methods
 
 extension Prebuilt {
     public struct HumanNameComponents: Equatable, Sendable, Hashable, Codable {
