@@ -19,10 +19,10 @@ let package = Package(
             url: "https://github.com/leviouwendijk/plate.git",
             branch: "master"
         ),
-        .package(
-            url: "https://github.com/leviouwendijk/Structures.git",
-            branch: "master"
-        ),
+        // .package(
+        //     url: "https://github.com/leviouwendijk/Structures.git",
+        //     branch: "master"
+        // ),
         // .package(
         //     url: "https://github.com/leviouwendijk/Extensions.git",
         //     branch: "master"
@@ -37,7 +37,7 @@ let package = Package(
             name: "Parsers",
             dependencies: [
                 .product(name: "plate", package: "plate"),
-                .product(name: "Structures", package: "Structures"),
+                // .product(name: "Structures", package: "Structures"),
                 // .product(name: "Extensions", package: "Extensions"),
                 // .product(name: "Interfaces", package: "Interfaces"),
             ],
@@ -51,7 +51,7 @@ let package = Package(
                 // .product(name: "Testing", package: "swift-testing"),
                 "Parsers",
                 .product(name: "plate", package: "plate"),
-                .product(name: "Structures", package: "Structures"),
+                // .product(name: "Structures", package: "Structures"),
                 // .product(name: "Extensions", package: "Extensions"),
                 // .product(name: "Interfaces", package: "Interfaces"),
             ]
