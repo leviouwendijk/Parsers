@@ -1,6 +1,6 @@
 import Foundation
 import plate
-import Extensions
+// import Extensions
 
 public struct NorgLexerOptions {
     public let trimLeadingNewlines: Bool
@@ -19,6 +19,8 @@ public struct NorgLexer {
     public let text: String
     public let options: NorgLexerOptions
     public let verbose: Bool
+
+    let norg_metadata_regex = #"(?s)@document\.meta.*?@end"#
 
     public init(
         text: String,
@@ -43,9 +45,12 @@ public struct NorgLexer {
     public func tokenize() -> [NorgToken] {
         var tokens: [NorgToken] = []
 
-        let cleaned = text.strippingNorgMetadata
-        let formatted = cleaned.emDashedFromHyphens()
-        var lines = formatted.splitByNewlines
+        // let cleaned = text.strippingNorgMetadata
+        let cleaned = text.removepattern(norg_metadata_regex)
+        // let formatted = cleaned.emDashedFromHyphens()
+        let formatted = cleaned.emdashed
+        // var lines = formatted.splitByNewlines
+        var lines = formatted.newlinesplit
 
         if options.trimLeadingNewlines {
             while let first = lines.first,

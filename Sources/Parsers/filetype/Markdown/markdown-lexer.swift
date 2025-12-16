@@ -1,11 +1,13 @@
 import Foundation
 import plate
-import Extensions
+// import Extensions
 
 public struct MarkdownLexerOptions {
     public let trimLeadingNewlines: Bool
     public let trimTrailingNewlines: Bool
+
     public init(trimLeadingNewlines: Bool = false, trimTrailingNewlines: Bool = false) {
+
         self.trimLeadingNewlines = trimLeadingNewlines
         self.trimTrailingNewlines = trimTrailingNewlines
     }
@@ -30,7 +32,7 @@ public struct MarkdownLexer {
         var tokens: [MarkdownToken] = []
         // var lines = text.components(separatedBy: "\n")
         let pre = decodeHTMLEntities(text).replacingOccurrences(of: "\u{00A0}", with: " ")
-        var lines = pre.components(separatedBy: "\n")
+        var lines = pre.newlinesplit
 
         if options.trimLeadingNewlines {
             while let first = lines.first, first.trimmingCharacters(in: .whitespaces).isEmpty { lines.removeFirst() }
