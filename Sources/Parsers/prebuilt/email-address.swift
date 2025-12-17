@@ -1,4 +1,5 @@
 import Foundation
+import Parsing
 
 extension Prebuilt {
     public struct EmailAddress: Equatable, Sendable, Hashable, Codable {

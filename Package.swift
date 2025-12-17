@@ -14,51 +14,21 @@ let package = Package(
             targets: ["Parsers"]),
     ],
     dependencies: [
-        // .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.2.0"),
-        // .package(
-        //     url: "https://github.com/leviouwendijk/plate.git",
-        //     branch: "master"
-        // ),
-        .package(
-            url: "https://github.com/leviouwendijk/Methods.git",
-            branch: "master"
-        ),
-        // .package(
-        //     url: "https://github.com/leviouwendijk/Structures.git",
-        //     branch: "master"
-        // ),
-        // .package(
-        //     url: "https://github.com/leviouwendijk/Extensions.git",
-        //     branch: "master"
-        // ),
-        // .package(
-        //     url: "https://github.com/leviouwendijk/Interfaces.git",
-        //     branch: "master"
-        // ),
+        .package(url: "https://github.com/leviouwendijk/Parsing.git", branch: "master"),
+        .package(url: "https://github.com/leviouwendijk/Methods.git", branch: "master"),
     ],
     targets: [
         .target(
             name: "Parsers",
             dependencies: [
-                // .product(name: "plate", package: "plate"),
+                .product(name: "Parsing", package: "Parsing"),
                 .product(name: "Methods", package: "Methods"),
-                // .product(name: "Structures", package: "Structures"),
-                // .product(name: "Extensions", package: "Extensions"),
-                // .product(name: "Interfaces", package: "Interfaces"),
-            ],
-            resources: [
-                .process("Resources")
             ],
         ),
         .testTarget(
             name: "ParsersTests",
             dependencies: [
-                // .product(name: "Testing", package: "swift-testing"),
                 "Parsers",
-                // .product(name: "plate", package: "plate"),
-                // .product(name: "Structures", package: "Structures"),
-                // .product(name: "Extensions", package: "Extensions"),
-                // .product(name: "Interfaces", package: "Interfaces"),
             ]
         ),
     ]

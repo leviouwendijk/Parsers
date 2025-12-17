@@ -1,4 +1,5 @@
 import Foundation
+import Parsing
 
 extension Prebuilt {
     public struct HumanFullName: Equatable, Sendable, Hashable, Codable {
