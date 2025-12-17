@@ -1,5 +1,5 @@
 {
-  "originHash" : "50be1eee28c78e1f18fbe3e6054963a80eddc263c3bc7408000ddf181cc8ae8b",
+  "originHash" : "08297475261231bcc95ed8616bcc8025dbe2f68f0b508bf86bbb16173c0eb5f1",
   "pins" : [
     {
       "identity" : "methods",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/leviouwendijk/Methods.git",
       "state" : {
         "branch" : "master",
-        "revision" : "b36a6e04f36e69ed149b2d9c2885a9d882064793"
+        "revision" : "3668117392a5e07ba36ba461adb90f1805461c3e"
       }
     },
     {
@@ -16,7 +16,7 @@
       "location" : "https://github.com/leviouwendijk/Parsing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "c967317233390778ec51effc7c601f497433d184"
+        "revision" : "162af044f18697c7beb0e9b5bef29a5a7636fc60"
       }
     }
   ],
