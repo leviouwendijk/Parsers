@@ -10,18 +10,17 @@ extension Prebuilt.Content {
 
         public init(
             assignment: AnyTokenParser<Void>,
-            separator: AnyTokenParser<Void> = AnyTokenParser { c in
-                .success((), c)
-            }
+            skip: AnyTokenParser<Void> = Skip.trivia()
         ) {
             self.inner = .init(
                 delimiter: .braces,
                 content: AnyTokenParser(
                     DateBlockParser(
                         assignment: assignment,
-                        separator: separator
+                        skip: skip
                     )
-                )
+                ),
+                skip: skip
             )
         }
 
@@ -31,6 +30,7 @@ extension Prebuilt.Content {
             switch inner.parse(cursor) {
                 case .failure(let diagnostic):
                     return .failure(diagnostic)
+
                 case .success(let output, let next):
                     return .success(output.content, next)
             }

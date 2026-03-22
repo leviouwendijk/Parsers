@@ -7,6 +7,7 @@ extension Prebuilt.Content {
         case duplicateField(String)
         case unexpectedField(String)
         case expectedNumericValue(String)
+        case expectedIntegerValue(String)
 
         public var errorDescription: String? {
             switch self {
@@ -16,6 +17,8 @@ extension Prebuilt.Content {
                     return "Unexpected field '\(name)'"
                 case .expectedNumericValue(let name):
                     return "Expected numeric value for field '\(name)'"
+                case .expectedIntegerValue(let name):
+                    return "Expected integer value for field '\(name)'"
             }
         }
     }
@@ -24,16 +27,14 @@ extension Prebuilt.Content {
         public typealias Output = PartialDate
 
         public let assignment: AnyTokenParser<Void>
-        public let separator: AnyTokenParser<Void>
+        public let skip: AnyTokenParser<Void>
 
         public init(
             assignment: AnyTokenParser<Void>,
-            separator: AnyTokenParser<Void> = AnyTokenParser { c in
-                .success((), c)
-            }
+            skip: AnyTokenParser<Void> = Skip.accountingLike()
         ) {
             self.assignment = assignment
-            self.separator = separator
+            self.skip = skip
         }
 
         public func parse(
@@ -45,98 +46,155 @@ extension Prebuilt.Content {
             var day: Int?
 
             while true {
+                cur = consumeSkip(from: cur)
+
+                if cur.isEOF {
+                    cur = consumeSkip(from: cur)
+                    return .success(
+                        PartialDate(
+                            year: year,
+                            month: month,
+                            day: day
+                        ),
+                        cur
+                    )
+                }
+
+                let fieldName: String
                 switch PIdent().parse(cur) {
                     case .failure:
-                        return .success(
-                            PartialDate(
-                                year: year,
-                                month: month,
-                                day: day
-                            ),
-                            cur
+                        return .failure(
+                            Diagnostic("Expected date field identifier")
                         )
 
-                    case .success(let fieldName, let afterField):
-                        cur = afterField
+                    case .success(let name, let next):
+                        fieldName = name
+                        cur = next
+                }
 
-                        switch assignment.parse(cur) {
-                            case .failure(let diagnostic):
-                                return .failure(diagnostic)
-                            case .success(_, let afterAssignment):
-                                cur = afterAssignment
-                        }
+                cur = consumeSkip(from: cur)
 
-                        switch PNumber().parse(cur) {
-                            case .failure:
-                                return .failure(
-                                    Diagnostic(
-                                        DateBlockParserError
-                                            .expectedNumericValue(fieldName)
-                                            .localizedDescription
-                                    )
+                switch assignment.parse(cur) {
+                    case .failure(let diagnostic):
+                        return .failure(diagnostic)
+
+                    case .success(_, let next):
+                        cur = next
+                }
+
+                cur = consumeSkip(from: cur)
+
+                let decimalValue: Decimal
+                switch PNumber().parse(cur) {
+                    case .failure:
+                        return .failure(
+                            Diagnostic(
+                                DateBlockParserError
+                                    .expectedNumericValue(fieldName)
+                                    .localizedDescription
+                            )
+                        )
+
+                    case .success(let value, let next):
+                        decimalValue = value
+                        cur = next
+                }
+
+                cur = consumeSkip(from: cur)
+
+                guard decimalValue.isWholeNumber else {
+                    return .failure(
+                        Diagnostic(
+                            DateBlockParserError
+                                .expectedIntegerValue(fieldName)
+                                .localizedDescription
+                        )
+                    )
+                }
+
+                let intValue = NSDecimalNumber(decimal: decimalValue).intValue
+
+                switch fieldName {
+                    case "year":
+                        guard year == nil else {
+                            return .failure(
+                                Diagnostic(
+                                    DateBlockParserError
+                                        .duplicateField(fieldName)
+                                        .localizedDescription
                                 )
-
-                            case .success(let value, let afterValue):
-                                cur = afterValue
-
-                                let intValue = NSDecimalNumber(decimal: value).intValue
-
-                                switch fieldName {
-                                    case "year":
-                                        guard year == nil else {
-                                            return .failure(
-                                                Diagnostic(
-                                                    DateBlockParserError
-                                                        .duplicateField(fieldName)
-                                                        .localizedDescription
-                                                )
-                                            )
-                                        }
-                                        year = intValue
-
-                                    case "month":
-                                        guard month == nil else {
-                                            return .failure(
-                                                Diagnostic(
-                                                    DateBlockParserError
-                                                        .duplicateField(fieldName)
-                                                        .localizedDescription
-                                                )
-                                            )
-                                        }
-                                        month = intValue
-
-                                    case "day":
-                                        guard day == nil else {
-                                            return .failure(
-                                                Diagnostic(
-                                                    DateBlockParserError
-                                                        .duplicateField(fieldName)
-                                                        .localizedDescription
-                                                )
-                                            )
-                                        }
-                                        day = intValue
-
-                                    default:
-                                        return .failure(
-                                            Diagnostic(
-                                                DateBlockParserError
-                                                    .unexpectedField(fieldName)
-                                                    .localizedDescription
-                                            )
-                                        )
-                                }
+                            )
                         }
+                        year = intValue
 
-                        switch separator.parse(cur) {
-                            case .success(_, let afterSeparator):
-                                cur = afterSeparator
-                            case .failure:
-                                break
+                    case "month":
+                        guard month == nil else {
+                            return .failure(
+                                Diagnostic(
+                                    DateBlockParserError
+                                        .duplicateField(fieldName)
+                                        .localizedDescription
+                                )
+                            )
                         }
+                        month = intValue
+
+                    case "day":
+                        guard day == nil else {
+                            return .failure(
+                                Diagnostic(
+                                    DateBlockParserError
+                                        .duplicateField(fieldName)
+                                        .localizedDescription
+                                )
+                            )
+                        }
+                        day = intValue
+
+                    default:
+                        return .failure(
+                            Diagnostic(
+                                DateBlockParserError
+                                    .unexpectedField(fieldName)
+                                    .localizedDescription
+                            )
+                        )
+                }
+
+                cur = consumeSkip(from: cur)
+            }
+        }
+
+        private func consumeSkip(
+            from cursor: TokenCursor
+        ) -> TokenCursor {
+            var cur = cursor
+
+            while true {
+                switch skip.parse(cur) {
+                    case .success(_, let next):
+                        if next.index == cur.index {
+                            return cur
+                        }
+                        cur = next
+
+                    case .failure:
+                        return cur
                 }
             }
         }
+    }
+}
+
+private extension Decimal {
+    var isWholeNumber: Bool {
+        self == rounded(0)
+    }
+
+    func rounded(_ scale: Int) -> Decimal {
+        var value = self
+        var result = Decimal()
+        NSDecimalRound(&result, &value, scale, .plain)
+        return result
     }
 }
