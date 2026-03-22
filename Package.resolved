@@ -1,5 +1,5 @@
 {
-  "originHash" : "08297475261231bcc95ed8616bcc8025dbe2f68f0b508bf86bbb16173c0eb5f1",
+  "originHash" : "9c2182747025ce3949e9affe586448ba1a8573b0ed2877f7cdda9f36ce8c0453",
   "pins" : [
     {
       "identity" : "methods",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/leviouwendijk/Methods.git",
       "state" : {
         "branch" : "master",
-        "revision" : "3668117392a5e07ba36ba461adb90f1805461c3e"
+        "revision" : "c8f7182aa3ddffa106e7d35aa5dd12f0873f63d4"
       }
     },
     {
@@ -16,7 +16,16 @@
       "location" : "https://github.com/leviouwendijk/Parsing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "162af044f18697c7beb0e9b5bef29a5a7636fc60"
+        "revision" : "c7d3968c925b4165283be42b7d8785ab0c6b94d8"
+      }
+    },
+    {
+      "identity" : "primitives",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/Primitives.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "88c0aad7d912d13fcc9131ac271d1691da998355"
       }
     }
   ],
