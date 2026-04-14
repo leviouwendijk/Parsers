@@ -1,4 +1,5 @@
 import Foundation
+import Position
 import Parsing
 
 extension Prebuilt {
@@ -29,8 +30,8 @@ extension Prebuilt {
 
     public enum PhoneParserError: Error, LocalizedError, Sendable, Equatable {
         case empty
-        case misplacedPlus(location: SourceLocation?)
-        case invalidCharacter(Character, location: SourceLocation?)
+        case misplacedPlus(location: Position?)
+        case invalidCharacter(Character, location: Position?)
         case tooShort(minDigits: Int, actual: Int)
         case tooLong(maxDigits: Int, actual: Int)
 
@@ -216,23 +217,8 @@ extension Prebuilt {
             return v < 0x20 || v == 0x7F || (0x80...0x9F).contains(v)
         }
 
-        static func loc(in input: String, offset: Int) -> SourceLocation? {
-            var line = 1
-            var col = 1
-            var i = 0
-
-            for ch in input {
-                if i >= offset { break }
-                if ch == "\n" {
-                    line += 1
-                    col = 1
-                } else {
-                    col += 1
-                }
-                i += 1
-            }
-
-            return SourceLocation(file: nil, line: line, column: col, invocation: nil)
+        static func loc(in input: String, offset: Int) -> Position? {
+            Prebuilt.loc(in: input, offset: offset)
         }
     }
 }

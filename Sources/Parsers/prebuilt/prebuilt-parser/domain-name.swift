@@ -1,4 +1,5 @@
 import Foundation
+import Position
 import Parsing
 
 extension Prebuilt {
@@ -24,7 +25,7 @@ extension Prebuilt {
 
     public enum DomainNameParserError: Error, LocalizedError, Sendable, Equatable {
         case empty
-        case invalidCharacter(Character, location: SourceLocation?)
+        case invalidCharacter(Character, location: Position?)
         case invalidLabel
         case labelTooLong(max: Int, actual: Int)
         case nameTooLong(max: Int, actual: Int)
@@ -216,7 +217,7 @@ extension Prebuilt {
         case invalidScheme
         case missingSchemeSeparator
         case emptyHost
-        case invalidCharacter(Character, location: SourceLocation?)
+        case invalidCharacter(Character, location: Position?)
         case invalidPort
         case invalidIPv6Literal
 

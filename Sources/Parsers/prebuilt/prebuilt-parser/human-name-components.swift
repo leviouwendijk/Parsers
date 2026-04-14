@@ -1,4 +1,5 @@
 import Foundation
+import Position
 import Parsing
 import Methods
 
@@ -86,7 +87,7 @@ extension Prebuilt {
     }
 
     public enum HumanNameComponentsParserError: Error, LocalizedError, Sendable, Equatable {
-        case tooFewParts(location: SourceLocation?)
+        case tooFewParts(location: Position?)
 
         public var errorDescription: String? {
             switch self {

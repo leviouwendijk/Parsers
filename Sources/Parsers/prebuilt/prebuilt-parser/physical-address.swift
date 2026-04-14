@@ -1,4 +1,5 @@
 import Foundation
+import Position
 import Parsing
 import Methods
 
@@ -34,8 +35,8 @@ extension Prebuilt {
 
     public enum PostalCodeNLParserError: Error, LocalizedError, Sendable, Equatable {
         case empty
-        case invalidFormat(location: SourceLocation?)
-        case invalidCharacter(Character, location: SourceLocation?)
+        case invalidFormat(location: Position?)
+        case invalidCharacter(Character, location: Position?)
 
         public var errorDescription: String? {
             switch self {
@@ -180,8 +181,8 @@ extension Prebuilt {
 
     public enum HouseNumberParserError: Error, LocalizedError, Sendable, Equatable {
         case empty
-        case invalidFormat(location: SourceLocation?)
-        case invalidCharacter(Character, location: SourceLocation?)
+        case invalidFormat(location: Position?)
+        case invalidCharacter(Character, location: Position?)
 
         public var errorDescription: String? {
             switch self {
@@ -240,7 +241,7 @@ extension Prebuilt {
                 cursor.advance()
             }
 
-            func locNow() -> SourceLocation? {
+            func locNow() -> Position? {
                 Prebuilt.loc(in: input, offset: cursor.offset)
             }
 

@@ -1,4 +1,5 @@
 import Foundation
+import Position
 import Parsing
 
 extension Prebuilt {
@@ -29,7 +30,7 @@ extension Prebuilt {
         case emptyLocalPart
         case emptyDomain
         case missingAt
-        case invalidCharacter(Character, location: SourceLocation?)
+        case invalidCharacter(Character, location: Position?)
 
         public var errorDescription: String? {
             switch self {

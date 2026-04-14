@@ -7,7 +7,7 @@
       "location" : "https://github.com/leviouwendijk/Methods.git",
       "state" : {
         "branch" : "master",
-        "revision" : "c8f7182aa3ddffa106e7d35aa5dd12f0873f63d4"
+        "revision" : "47d7bf31c1e547238c1900fe4a1f6961b6cc19bb"
       }
     },
     {
@@ -16,7 +16,16 @@
       "location" : "https://github.com/leviouwendijk/Parsing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "2929fa73fb0d2a59c52ad8ba612acef56925b3a8"
+        "revision" : "38e346697615fbb32fdac86e6528c18104d89334"
+      }
+    },
+    {
+      "identity" : "position",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/Position.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "70fd78230c3452d9a4471222d64324a2c084351d"
       }
     },
     {

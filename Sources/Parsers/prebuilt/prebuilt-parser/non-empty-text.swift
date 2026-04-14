@@ -1,4 +1,5 @@
 import Foundation
+import Position
 import Parsing
 
 extension Prebuilt {
@@ -31,7 +32,7 @@ extension Prebuilt {
         case empty
         case tooShort(min: Int, actual: Int)
         case tooLong(max: Int, actual: Int)
-        case invalidCharacter(Character, location: SourceLocation?)
+        case invalidCharacter(Character, location: Position?)
 
         public var errorDescription: String? {
             switch self {

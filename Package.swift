@@ -17,6 +17,7 @@ let package = Package(
         .package(url: "https://github.com/leviouwendijk/Parsing.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Methods.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Primitives.git", branch: "master"),
+        .package(url: "https://github.com/leviouwendijk/Position.git", branch: "master"),
     ],
     targets: [
         .target(
@@ -25,6 +26,7 @@ let package = Package(
                 .product(name: "Parsing", package: "Parsing"),
                 .product(name: "Methods", package: "Methods"),
                 .product(name: "Primitives", package: "Primitives"),
+                .product(name: "Position", package: "Position"),
             ],
         ),
         .testTarget(

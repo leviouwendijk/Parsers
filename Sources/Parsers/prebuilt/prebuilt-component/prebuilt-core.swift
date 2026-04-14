@@ -1,4 +1,5 @@
 import Foundation
+import Position
 import Parsing
 
 extension Prebuilt {
@@ -13,7 +14,7 @@ extension Prebuilt {
         return v < 0x20 || v == 0x7F || (0x80...0x9F).contains(v)
     }
 
-    static func loc(in input: String, offset: Int) -> SourceLocation? {
+    static func loc(in input: String, offset: Int) -> Position? {
         var line = 1
         var col = 1
         var i = 0
@@ -29,7 +30,12 @@ extension Prebuilt {
             i += 1
         }
 
-        return SourceLocation(file: nil, line: line, column: col, invocation: nil)
+        return Position(
+            uncheckedFile: nil,
+            line: line,
+            column: col,
+            invocation: nil
+        )
     }
 
     @inline(__always)
