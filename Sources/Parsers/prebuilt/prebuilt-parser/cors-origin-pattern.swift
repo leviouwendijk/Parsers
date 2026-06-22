@@ -1,30 +1,28 @@
 import Foundation
 
 extension Prebuilt {
-    public enum CORSOriginPatternError: Error, LocalizedError, Sendable, Equatable {
-        case invalidRelativeSubdomain(String, base: String)
-        case wildcardCannotExpandToExactOrigins
+    public enum CORSOriginPatternError: Error, LocalizedError, Sendable {
+        case invalidHost(String, Error)
 
         public var errorDescription: String? {
             switch self {
-            case .invalidRelativeSubdomain(let value, let base):
-                return "Invalid relative CORS subdomain '\(value)' for base '\(base)'"
-
-            case .wildcardCannotExpandToExactOrigins:
-                return "Wildcard CORS origin patterns cannot be expanded to exact origin strings"
+            case .invalidHost(let host, let error):
+                return "Invalid CORS origin host pattern '\(host)': \(error.localizedDescription)"
             }
         }
     }
 
     public struct CORSOriginPattern: Sendable, Hashable {
-        private enum Kind: Sendable, Hashable {
+        public enum Kind: Sendable, Hashable {
             case exactHosts([DomainName])
             case subdomains(base: DomainName, includeApex: Bool)
         }
 
-        private let kind: Kind
+        public let kind: Kind
 
-        private init(kind: Kind) {
+        public init(
+            kind: Kind
+        ) {
             self.kind = kind
         }
 
@@ -32,19 +30,19 @@ extension Prebuilt {
             _ host: String,
             includeWWWVariant: Bool = false
         ) throws -> Self {
-            let base = try DomainName(host)
-
             var hosts: [DomainName] = [
-                base
+                try parseHost(host)
             ]
 
             if includeWWWVariant {
                 hosts.append(
-                    try DomainName("www.\(base.rawValue)")
+                    try parseHost(
+                        "www.\(hosts[0].rawValue)"
+                    )
                 )
             }
 
-            return Self(
+            return .init(
                 kind: .exactHosts(
                     unique(hosts)
                 )
@@ -52,56 +50,63 @@ extension Prebuilt {
         }
 
         public static func family(
-            base rawBase: String,
-            subdomains rawSubdomains: [String] = [],
+            base: String,
+            subdomains: [String] = [],
             includeApex: Bool = true,
-            includeWWWVariants: Bool = true
+            variantPrefixes: [String] = [],
+            includeWWWVariants: Bool = false,
+            includeVariantCombinations: Bool = true,
+            includeVariantPermutations: Bool = true
         ) throws -> Self {
-            let base = try DomainName(rawBase)
+            let baseHost = try parseHost(base)
 
             var hosts: [DomainName] = []
 
-            func appendHost(_ raw: String) throws {
-                let host = try DomainName(raw)
-
-                hosts.append(host)
-
-                if includeWWWVariants {
-                    hosts.append(
-                        try DomainName("www.\(host.rawValue)")
-                    )
-                }
-            }
-
             if includeApex {
-                try appendHost(base.rawValue)
+                hosts.append(baseHost)
             }
 
-            for rawSubdomain in rawSubdomains {
-                let relative = try normalizedRelativeSubdomain(
-                    rawSubdomain,
-                    base: base
-                )
-
-                try appendHost(
-                    "\(relative).\(base.rawValue)"
+            for subdomain in subdomains {
+                hosts.append(
+                    try parseHost(
+                        "\(subdomain).\(baseHost.rawValue)"
+                    )
                 )
             }
 
-            return Self(
+            var variants = variantPrefixes
+
+            if includeWWWVariants {
+                variants.append("www")
+            }
+
+            let normalizedVariants = try unique(
+                variants.map {
+                    try parseHost($0).rawValue
+                }
+            )
+
+            let expandedHosts = try expand(
+                hosts: hosts,
+                variantPrefixes: normalizedVariants,
+                includeVariantCombinations: includeVariantCombinations,
+                includeVariantPermutations: includeVariantPermutations
+            )
+
+            return .init(
                 kind: .exactHosts(
-                    unique(hosts)
+                    unique(expandedHosts)
                 )
             )
         }
 
         public static func subdomains(
-            of rawBase: String,
+            of base: String,
             includeApex: Bool = false
         ) throws -> Self {
-            Self(
+            .init(
                 kind: .subdomains(
-                    base: try DomainName(rawBase),
+                    base: try parseHost(base),
                     includeApex: includeApex
                 )
             )
@@ -151,72 +156,204 @@ extension Prebuilt {
             schemes: [Origin.Scheme] = [.https],
             port: Int? = nil
         ) throws -> [String] {
-            guard case .exactHosts(let hosts) = kind else {
-                throw CORSOriginPatternError.wildcardCannotExpandToExactOrigins
-            }
-
-            return hosts.flatMap { host in
-                schemes.map { scheme in
-                    Self.originString(
-                        scheme: scheme,
-                        host: host,
-                        port: port
-                    )
+            switch kind {
+            case .exactHosts(let hosts):
+                return hosts.flatMap { host in
+                    schemes.map { scheme in
+                        Self.originString(
+                            scheme: scheme,
+                            host: host.rawValue,
+                            port: port
+                        )
+                    }
                 }
+
+            case .subdomains:
+                return []
             }
         }
 
-        private static func normalizedRelativeSubdomain(
-            _ raw: String,
-            base: DomainName
-        ) throws -> String {
-            let trimmed = raw
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased()
+        private static func parseHost(
+            _ host: String
+        ) throws -> DomainName {
+            do {
+                return try DomainNameParser.parse(host)
+            } catch {
+                throw CORSOriginPatternError.invalidHost(
+                    host,
+                    error
+                )
+            }
+        }
 
-            guard
-                !trimmed.isEmpty,
-                !trimmed.hasPrefix("."),
-                !trimmed.hasSuffix("."),
-                trimmed != base.rawValue,
-                !trimmed.hasSuffix(".\(base.rawValue)")
-            else {
-                throw CORSOriginPatternError.invalidRelativeSubdomain(
-                    raw,
-                    base: base.rawValue
+        private static func expand(
+            hosts: [DomainName],
+            variantPrefixes: [String],
+            includeVariantCombinations: Bool,
+            includeVariantPermutations: Bool
+        ) throws -> [DomainName] {
+            guard !variantPrefixes.isEmpty else {
+                return hosts
+            }
+
+            let prefixGroups = variantPrefixGroups(
+                variantPrefixes,
+                includeCombinations: includeVariantCombinations,
+                includePermutations: includeVariantPermutations
+            )
+
+            var expanded = hosts
+
+            for host in hosts {
+                for group in prefixGroups {
+                    expanded.append(
+                        try parseHost(
+                            "\(group.joined(separator: ".")).\(host.rawValue)"
+                        )
+                    )
+                }
+            }
+
+            return expanded
+        }
+
+        private static func variantPrefixGroups(
+            _ variants: [String],
+            includeCombinations: Bool,
+            includePermutations: Bool
+        ) -> [[String]] {
+            guard !variants.isEmpty else {
+                return []
+            }
+
+            if !includeCombinations {
+                return variants.map {
+                    [$0]
+                }
+            }
+
+            if includePermutations {
+                var groups: [[String]] = []
+
+                for length in 1...variants.count {
+                    groups.append(
+                        contentsOf: permutations(
+                            variants,
+                            length: length
+                        )
+                    )
+                }
+
+                return groups
+            }
+
+            return orderedSubsets(
+                variants
+            )
+        }
+
+        private static func orderedSubsets(
+            _ values: [String]
+        ) -> [[String]] {
+            var result: [[String]] = []
+
+            func walk(
+                index: Int,
+                current: [String]
+            ) {
+                if index == values.count {
+                    if !current.isEmpty {
+                        result.append(current)
+                    }
+
+                    return
+                }
+
+                walk(
+                    index: index + 1,
+                    current: current
+                )
+
+                walk(
+                    index: index + 1,
+                    current: current + [values[index]]
                 )
             }
 
-            _ = try DomainName(
-                "\(trimmed).\(base.rawValue)"
+            walk(
+                index: 0,
+                current: []
             )
 
-            return trimmed
+            return result
+        }
+
+        private static func permutations(
+            _ values: [String],
+            length: Int
+        ) -> [[String]] {
+            if length == 0 {
+                return [
+                    []
+                ]
+            }
+
+            var result: [[String]] = []
+
+            for index in values.indices {
+                var remaining = values
+                let value = remaining.remove(
+                    at: index
+                )
+
+                for suffix in permutations(
+                    remaining,
+                    length: length - 1
+                ) {
+                    result.append(
+                        [value] + suffix
+                    )
+                }
+            }
+
+            return result
+        }
+
+        private static func unique<T: Hashable>(
+            _ values: [T]
+        ) -> [T] {
+            var seen = Set<T>()
+            var result: [T] = []
+
+            for value in values {
+                if seen.insert(value).inserted {
+                    result.append(value)
+                }
+            }
+
+            return result
         }
 
         private static func originString(
             scheme: Origin.Scheme,
-            host: DomainName,
+            host: String,
             port: Int?
         ) -> String {
+            let schemeString: String
+
+            switch scheme {
+            case .http:
+                schemeString = "http"
+
+            case .https:
+                schemeString = "https"
+            }
+
             if let port {
-                return "\(scheme.rawValue)://\(host.rawValue):\(port)"
+                return "\(schemeString)://\(host):\(port)"
             }
 
-            return "\(scheme.rawValue)://\(host.rawValue)"
-        }
-
-        private static func unique(
-            _ hosts: [DomainName]
-        ) -> [DomainName] {
-            var seen: Set<DomainName> = []
-            var result: [DomainName] = []
-
-            for host in hosts where seen.insert(host).inserted {
-                result.append(host)
-            }
-
-            return result
+            return "\(schemeString)://\(host)"
         }
     }
 }
