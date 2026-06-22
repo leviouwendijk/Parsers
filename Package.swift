@@ -5,19 +5,26 @@ import PackageDescription
 
 let package = Package(
     name: "Parsers",
-    // platforms: [
-    //     .macOS(.v13)
-    // ],
+    platforms: [
+        .macOS(.v13)
+    ],
     products: [
         .library(
             name: "Parsers",
-            targets: ["Parsers"]),
+            targets: ["Parsers"]
+        ),
+        .executable(
+            name: "parsertest",
+            targets: ["ParsersTestFlows"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/leviouwendijk/Parsing.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Methods.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Primitives.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Position.git", branch: "master"),
+
+        .package(url: "https://github.com/leviouwendijk/TestFlows.git", branch: "master"),
     ],
     targets: [
         .target(
@@ -29,10 +36,11 @@ let package = Package(
                 .product(name: "Position", package: "Position"),
             ],
         ),
-        .testTarget(
-            name: "ParsersTests",
+        .executableTarget(
+            name: "ParsersTestFlows",
             dependencies: [
                 "Parsers",
+                "TestFlows",
             ]
         ),
     ]
