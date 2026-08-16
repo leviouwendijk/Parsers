@@ -1,5 +1,5 @@
 {
-  "originHash" : "c68812692141731baed2156dce0ed77e91f3f8f8533682f4f479a89eb28a3712",
+  "originHash" : "f1e8180114dd405c14ddb7d843fb4310a5f7791e068af0d1d41057df5efae5e2",
   "pins" : [
     {
       "identity" : "ansi",
@@ -34,7 +34,7 @@
       "location" : "https://github.com/leviouwendijk/Parsing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "38e346697615fbb32fdac86e6528c18104d89334"
+        "revision" : "8cd4b7bdc25d590d65b803a4f3e07e4fe3756664"
       }
     },
     {
@@ -52,7 +52,7 @@
       "location" : "https://github.com/leviouwendijk/Primitives.git",
       "state" : {
         "branch" : "master",
-        "revision" : "9c07dc28206dddc67bb0052a84aaecf803a55f67"
+        "revision" : "cc0872f22716351cf5bae55470b72f3d8942d62b"
       }
     },
     {
@@ -70,7 +70,7 @@
       "location" : "https://github.com/leviouwendijk/Terminal.git",
       "state" : {
         "branch" : "master",
-        "revision" : "0a55bdc55ce07514cf9dc772edef4fa27cbdb2d6"
+        "revision" : "95b8c4bbb8270018b9c2031119fcd486c0114696"
       }
     },
     {
@@ -79,7 +79,7 @@
       "location" : "https://github.com/leviouwendijk/TestFlows.git",
       "state" : {
         "branch" : "master",
-        "revision" : "79b1af3ebd1fe834f2bd0b68642e55f25a261428"
+        "revision" : "ef72deb44f924372959189d0c258c5cf7e2ba8ae"
       }
     }
   ],
