@@ -50,14 +50,22 @@ extension Prebuilt.Content {
 
                 if cur.isEOF {
                     cur = consumeSkip(from: cur)
-                    return .success(
-                        PartialDate(
-                            year: year,
-                            month: month,
-                            day: day
-                        ),
-                        cur
-                    )
+                    do {
+                        return .success(
+                            try PartialDate(
+                                year: year,
+                                month: month,
+                                day: day
+                            ),
+                            cur
+                        )
+                    } catch {
+                        return .failure(
+                            Diagnostic(
+                                error.localizedDescription
+                            )
+                        )
+                    }
                 }
 
                 let fieldName: String

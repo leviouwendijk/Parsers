@@ -165,7 +165,7 @@ extension Prebuilt {
                 throw DateSpecificationParserError.invalidLiteral(raw)
             }
 
-            let partial = PartialDate(
+            let partial = try PartialDate(
                 year: year,
                 month: month,
                 day: day
