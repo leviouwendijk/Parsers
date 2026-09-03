@@ -1,5 +1,5 @@
 {
-  "originHash" : "f1e8180114dd405c14ddb7d843fb4310a5f7791e068af0d1d41057df5efae5e2",
+  "originHash" : "808b90805e4fb5b36ca70627684074b6738174ddb10914406942e49d8d98cef0",
   "pins" : [
     {
       "identity" : "ansi",
@@ -17,6 +17,15 @@
       "state" : {
         "branch" : "master",
         "revision" : "ca0f33316fcf56ace04f1f5a1bb178667a291abc"
+      }
+    },
+    {
+      "identity" : "dsl",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/DSL.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "9efff74e61ff3679fce19f3cbf6df09c3bc23691"
       }
     },
     {

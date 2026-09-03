@@ -13,6 +13,10 @@ let package = Package(
             name: "Parsers",
             targets: ["Parsers"]
         ),
+        .library(
+            name: "ParsersStructuredContent",
+            targets: ["ParsersStructuredContent"]
+        ),
         .executable(
             name: "parsertest",
             targets: ["ParsersTestFlows"]
@@ -23,6 +27,7 @@ let package = Package(
         .package(url: "https://github.com/leviouwendijk/Methods.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Primitives.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Position.git", branch: "master"),
+        .package(url: "https://github.com/leviouwendijk/DSL.git", branch: "master"),
 
         .package(url: "https://github.com/leviouwendijk/TestFlows.git", branch: "master"),
     ],
@@ -36,10 +41,18 @@ let package = Package(
                 .product(name: "Position", package: "Position"),
             ],
         ),
+        .target(
+            name: "ParsersStructuredContent",
+            dependencies: [
+                .product(name: "DSL", package: "DSL"),
+            ]
+        ),
         .executableTarget(
             name: "ParsersTestFlows",
             dependencies: [
                 "Parsers",
+                "ParsersStructuredContent",
+                .product(name: "DSL", package: "DSL"),
                 "TestFlows",
             ]
         ),
