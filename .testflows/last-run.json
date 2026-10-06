@@ -3,12 +3,12 @@
   "failed_names" : [
 
   ],
-  "generated_at" : "2026-06-22T11:28:16Z",
-  "passed" : 1,
+  "generated_at" : "2026-09-03T12:50:35Z",
+  "passed" : 2,
   "results" : [
     {
       "display_name" : "Prebuilt IP address parsers preserve expected behavior",
-      "duration_seconds" : 0.002109050750732422,
+      "duration_seconds" : 0.0010819435119628906,
       "name" : "prebuilt.ip-address.regression",
       "status" : "passed",
       "tags" : [
@@ -19,9 +19,20 @@
         "prebuilt",
         "regression"
       ]
+    },
+    {
+      "display_name" : "Markdown parses into StructuredContent",
+      "duration_seconds" : 0.0007590055465698242,
+      "name" : "structured-content.markdown",
+      "status" : "passed",
+      "tags" : [
+        "markdown",
+        "parsers",
+        "structured-content"
+      ]
     }
   ],
   "skipped" : 0,
   "title" : "Parser Test Flows",
-  "total" : 1
+  "total" : 2
 }

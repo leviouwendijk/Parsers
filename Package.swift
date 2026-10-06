@@ -29,7 +29,7 @@ let package = Package(
         .package(url: "https://github.com/leviouwendijk/Position.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/DSL.git", branch: "master"),
 
-        .package(url: "https://github.com/leviouwendijk/TestFlows.git", branch: "master"),
+        .package(url: "https://github.com/leviouwendijk/Testing.git", branch: "master"),
     ],
     targets: [
         .target(
@@ -53,7 +53,7 @@ let package = Package(
                 "Parsers",
                 "ParsersStructuredContent",
                 .product(name: "DSL", package: "DSL"),
-                "TestFlows",
+                .product(name: "Testing", package: "Testing"),
             ]
         ),
     ]

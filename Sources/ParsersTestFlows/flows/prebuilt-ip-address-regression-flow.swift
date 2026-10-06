@@ -1,9 +1,9 @@
 import Foundation
 import Parsers
-import TestFlows
+import Testing
 
-extension ParserFlowSuite {
-    static let prebuiltIPAddressRegressionFlow = TestFlow(
+extension ParserTestSuite {
+    static let prebuiltIPAddressRegressionSuite = TestSuite(
         "prebuilt.ip-address.regression",
         title: "Prebuilt IP address parsers preserve expected behavior",
         tags: [
@@ -15,7 +15,7 @@ extension ParserFlowSuite {
             "regression"
         ]
     ) {
-        Step("bounded integer parses values inside range") {
+        Test("bounded integer parses values inside range") {
             let zero = try Prebuilt.BoundedIntegerParser.parse(
                 "0",
                 range: 0...255
@@ -50,7 +50,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("bounded integer rejects empty, non-digits, and out-of-range values") {
+        Test("bounded integer rejects empty, non-digits, and out-of-range values") {
             try Expect.throwsError(
                 "bounded-integer.empty"
             ) {
@@ -79,7 +79,7 @@ extension ParserFlowSuite {
             }
         }
 
-        Step("IPv4 parser accepts and normalizes ordinary IPv4 addresses") {
+        Test("IPv4 parser accepts and normalizes ordinary IPv4 addresses") {
             let ip = try Prebuilt.IPAddressParser.parse(
                 "203.0.113.10"
             )
@@ -107,7 +107,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("IPv4 parser rejects malformed or unspecified IPv4 addresses") {
+        Test("IPv4 parser rejects malformed or unspecified IPv4 addresses") {
             try Expect.throwsError(
                 "ip-address.ipv4.empty"
             ) {
@@ -139,7 +139,7 @@ extension ParserFlowSuite {
             }
         }
 
-        Step("IPv4 parser can allow unspecified address explicitly") {
+        Test("IPv4 parser can allow unspecified address explicitly") {
             let ip = try Prebuilt.IPAddressParser.parse(
                 "0.0.0.0",
                 config: .init(
@@ -160,7 +160,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("IPv6 parser accepts simple IPv6 literals and lowercases them") {
+        Test("IPv6 parser accepts simple IPv6 literals and lowercases them") {
             let ip = try Prebuilt.IPAddressParser.parse(
                 "2001:DB8::17"
             )
@@ -178,7 +178,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("IPv6 parser rejects invalid characters and unspecified default") {
+        Test("IPv6 parser rejects invalid characters and unspecified default") {
             try Expect.throwsError(
                 "ip-address.ipv6.invalid-character"
             ) {
@@ -192,7 +192,7 @@ extension ParserFlowSuite {
             }
         }
 
-        Step("IPv6 parser can allow unspecified address explicitly") {
+        Test("IPv6 parser can allow unspecified address explicitly") {
             let ip = try Prebuilt.IPAddressParser.parse(
                 "::",
                 config: .init(
@@ -213,7 +213,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("forwarded client IP parser accepts first address from forwarded chain") {
+        Test("forwarded client IP parser accepts first address from forwarded chain") {
             let ip = try Prebuilt.ForwardedClientIPParser.parse(
                 "203.0.113.10, 10.100.0.1, 10.90.20.15"
             )
@@ -231,7 +231,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("forwarded client IP parser accepts IPv6 first address") {
+        Test("forwarded client IP parser accepts IPv6 first address") {
             let ip = try Prebuilt.ForwardedClientIPParser.parse(
                 "2001:db8::17, 10.100.0.1"
             )
@@ -249,7 +249,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("forwarded client IP parser rejects missing, empty, invalid, and unspecified chains") {
+        Test("forwarded client IP parser rejects missing, empty, invalid, and unspecified chains") {
             try Expect.throwsError(
                 "forwarded-client-ip.missing"
             ) {

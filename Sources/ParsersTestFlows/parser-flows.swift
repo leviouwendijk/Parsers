@@ -1,10 +1,11 @@
-import TestFlows
+import Testing
 
-enum ParserFlowSuite: TestFlowRegistry {
-    static let title = "Parser Test Flows"
-
-    static let flows: [TestFlow] = [
-        prebuiltIPAddressRegressionFlow,
-        markdownStructuredContentFlow,
-    ]
+enum ParserTestSuite {
+    static let suite = TestSuite(
+        "parsers",
+        title: "Parser tests"
+    ) {
+        prebuiltIPAddressRegressionSuite
+        markdownStructuredContentSuite
+    }
 }

@@ -1,10 +1,27 @@
-import TestFlows
+import Foundation
+import Testing
 
 @main
 enum ParserTestCLI {
     static func main() async {
-        await TestFlowCLI.run(
-            suite: ParserFlowSuite.self
+        let output = ClosureTestTextOutput { text in
+            FileHandle.standardOutput.write(
+                Data(
+                    text.utf8
+                )
+            )
+        }
+        let reporter = PlainTextTestReporter(
+            verbose: CommandLine.arguments.contains("--verbose"),
+            output: output
+        )
+        let result = await TestRunner.run(
+            ParserTestSuite.suite,
+            sink: reporter
+        )
+
+        Foundation.exit(
+            result.isFailure ? 1 : 0
         )
     }
 }

@@ -1,9 +1,9 @@
 import DSL
 import ParsersStructuredContent
-import TestFlows
+import Testing
 
-extension ParserFlowSuite {
-    static let markdownStructuredContentFlow = TestFlow(
+extension ParserTestSuite {
+    static let markdownStructuredContentSuite = TestSuite(
         "structured-content.markdown",
         title: "Markdown parses into StructuredContent",
         tags: [
@@ -12,7 +12,7 @@ extension ParserFlowSuite {
             "structured-content",
         ]
     ) {
-        Step("common model markdown maps to semantic content") {
+        Test("common model markdown maps to semantic content") {
             let source = """
                 # Runtime
 
@@ -99,7 +99,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("headings form nested semantic sections") {
+        Test("headings form nested semantic sections") {
             let parsed =
                 MarkdownStructuredContentParser.parse(
                     """
@@ -164,7 +164,7 @@ extension ParserFlowSuite {
             )
         }
 
-        Step("unsupported or incomplete syntax remains text") {
+        Test("unsupported or incomplete syntax remains text") {
             let parsed =
                 MarkdownStructuredContentParser.parse(
                     "Keep *unfinished and [links](raw) unchanged."
