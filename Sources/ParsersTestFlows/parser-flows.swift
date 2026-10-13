@@ -7,5 +7,7 @@ enum ParserTestSuite {
     ) {
         prebuiltIPAddressRegressionSuite
         markdownStructuredContentSuite
+        pklSyntaxSuite
+        pklParserSuite
     }
 }

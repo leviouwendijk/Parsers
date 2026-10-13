@@ -53,6 +53,7 @@ let package = Package(
                 "Parsers",
                 "ParsersStructuredContent",
                 .product(name: "DSL", package: "DSL"),
+                .product(name: "Position", package: "Position"),
                 .product(name: "Testing", package: "Testing"),
             ]
         ),
