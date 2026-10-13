@@ -9,5 +9,6 @@ enum ParserTestSuite {
         markdownStructuredContentSuite
         pklSyntaxSuite
         pklParserSuite
+        pklCodingSuite
     }
 }
