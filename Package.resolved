@@ -1,5 +1,5 @@
 {
-  "originHash" : "9346db2c7c3749f8af282a5957217403828b82b8b1701698c94045985094fbca",
+  "originHash" : "9ef86d6f7c324a9e095d4019461b17c8b4b68fa5d23160ff5941b4bb515a5407",
   "pins" : [
     {
       "identity" : "atomos",
@@ -34,7 +34,7 @@
       "location" : "https://github.com/leviouwendijk/Parsing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "e08c491045a72bdde184cfd826dc2af0fcbe7f30"
+        "revision" : "eb15870c0eef5cf9901f032454313fe7ecf210f4"
       }
     },
     {
@@ -52,7 +52,7 @@
       "location" : "https://github.com/leviouwendijk/Primitives.git",
       "state" : {
         "branch" : "master",
-        "revision" : "7f1da40806dd20e07be0635bf7a2bff461e54b2a"
+        "revision" : "239603be564915e79ae83c87cb3bec4e60ff1a48"
       }
     },
     {

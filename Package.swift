@@ -17,9 +17,16 @@ let package = Package(
             name: "ParsersStructuredContent",
             targets: ["ParsersStructuredContent"]
         ),
+
+        // testing
         .executable(
             name: "parsertest",
             targets: ["ParsersTestFlows"]
+        ),
+        .executable(
+            name: "t_parsers_invariance",
+            targets: ["ParsersInvariantTests"
+            ]
         ),
     ],
     dependencies: [
@@ -55,7 +62,16 @@ let package = Package(
                 .product(name: "DSL", package: "DSL"),
                 .product(name: "Position", package: "Position"),
                 .product(name: "Testing", package: "Testing"),
-            ]
+            ],
+            path: "Testing/ParsersTestFlows"
+        ),
+        .executableTarget(
+            name: "ParsersInvariantTests",
+            dependencies: [
+                "Parsers",
+                .product(name: "Testing", package: "Testing"),
+            ],
+            path: "Testing/ParsersInvariantTests"
         ),
     ]
 )

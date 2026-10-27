@@ -1,11 +1,32 @@
 import Foundation
 import Position
 import Parsing
+import Primitives
 
 extension Prebuilt {
-    public struct NonEmptyText: Equatable, Sendable, Hashable, Codable {
+    public struct NonEmptyText: Invariant, Equatable, Sendable, Hashable, Codable {
+        /// Text after the caller's chosen normalization policy, before intrinsic validation.
+        public struct Raw: Sendable, Hashable {
+            public let value: String
+
+            public init(_ value: String) {
+                self.value = value
+            }
+        }
+
+        public typealias Error = NonEmptyTextParserError
+
         public let rawValue: String
 
+        /// The intrinsic guarantee is nonblank text; length and normalization are parser policy.
+        public init(_ raw: Raw) throws(Error) {
+            guard raw.value.contains(where: { !$0.isWhitespace }) else {
+                throw .empty
+            }
+            self.rawValue = raw.value
+        }
+
+        /// Retains the original configurable normalization and length-validation behavior.
         public init(
             _ value: String,
             config: NonEmptyTextParser.Configuration = .init()
@@ -17,14 +38,30 @@ extension Prebuilt {
             _ value: String?,
             config: NonEmptyTextParser.Configuration = .init()
         ) throws {
-            guard let v = value else { 
+            guard let value else {
                 throw RawInputValueError.empty(Self.self)
             }
-            try self.init(v, config: config)
+            try self.init(value, config: config)
         }
 
-        internal init(validated rawValue: String) {
-            self.rawValue = rawValue
+        private enum CodingKeys: String, CodingKey {
+            case rawValue
+        }
+
+        /// Decoding must preserve the intrinsic guarantee without re-normalizing stored text.
+        /// Encoding remains synthesized with the existing keyed `rawValue` representation.
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let rawValue = try container.decode(String.self, forKey: .rawValue)
+            do {
+                try self.init(Raw(rawValue))
+            } catch {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .rawValue,
+                    in: container,
+                    debugDescription: error.localizedDescription
+                )
+            }
         }
     }
 
@@ -79,85 +116,108 @@ extension Prebuilt {
         }
 
         public func parse(_ cursor: Cursor) -> ParseResult<NonEmptyText> {
-            var cur = cursor
-            let start = cur.mark()
-
-            do {
-                let out = try Self.parseText(&cur, config: config)
-                return .success(out, cur)
-            } catch let e as NonEmptyTextParserError {
-                let d = Diagnostic(e.localizedDescription, range: cur.range(from: start))
-                return .failure(d)
-            } catch {
-                let d = Diagnostic("Text parse failed: \(error.localizedDescription)", range: cur.range(from: start))
-                return .failure(d)
-            }
+            RawTextParser(config: config)
+                .invariant(NonEmptyText.self)
+                .tryMap { value in
+                    try Self.validateLength(value, config: config)
+                    return value
+                }
+                .parse(cursor)
         }
 
         public static func parse(_ input: String, config: Configuration = .init()) throws -> NonEmptyText {
-            var cur = Cursor(input)
-            let out = try parseText(&cur, config: config)
-
-            if cur.peek() != nil {
-                throw NonEmptyTextParserError.invalidCharacter(cur.peek()!, location: Prebuilt.loc(in: input, offset: cur.offset))
+            var cursor = Cursor(input)
+            let raw = try parseRawText(&cursor, config: config)
+            let value = try NonEmptyText(raw)
+            try validateLength(value, config: config)
+            if let character = cursor.peek() {
+                throw NonEmptyTextParserError.invalidCharacter(
+                    character,
+                    location: Prebuilt.loc(in: input, offset: cursor.offset)
+                )
             }
-
-            return out
+            return value
         }
 
-        private static func parseText(_ cursor: inout Cursor, config: Configuration) throws -> NonEmptyText {
+        private static func validateLength(_ value: NonEmptyText, config: Configuration) throws {
+            let count = value.rawValue.count
+            if count < config.minLength {
+                throw NonEmptyTextParserError.tooShort(min: config.minLength, actual: count)
+            }
+            if count > config.maxLength {
+                throw NonEmptyTextParserError.tooLong(max: config.maxLength, actual: count)
+            }
+        }
+
+        private struct RawTextParser: Parser, Sendable {
+            let config: Configuration
+
+            func parse(_ cursor: Cursor) -> ParseResult<NonEmptyText.Raw> {
+                var current = cursor
+                let start = current.mark()
+                do {
+                    return .success(try NonEmptyTextParser.parseRawText(&current, config: config), current)
+                } catch let error as NonEmptyTextParserError {
+                    return .failure(Diagnostic(error.localizedDescription, range: current.range(from: start)))
+                } catch {
+                    return .failure(Diagnostic("Text parse failed: \(error.localizedDescription)", range: current.range(from: start)))
+                }
+            }
+        }
+
+        private static func parseRawText(
+            _ cursor: inout Cursor,
+            config: Configuration
+        ) throws -> NonEmptyText.Raw {
             let input = cursor.input
-            let start = cursor.mark()
+            var output = ""
+            output.reserveCapacity(min(256, input.count))
 
-            var out = ""
-            out.reserveCapacity(min(256, input.count))
-
-            var sawNonWS = false
+            var sawNonWhitespace = false
             var pendingSpace = false
 
             func flushPendingSpaceIfNeeded() {
-                if config.collapseWhitespace, pendingSpace, sawNonWS, !out.isEmpty {
-                    out.append(" ")
+                if config.collapseWhitespace, pendingSpace, sawNonWhitespace, !output.isEmpty {
+                    output.append(" ")
                 }
                 pendingSpace = false
             }
 
-            while let ch = cursor.peek() {
-                if let s = ch.unicodeScalars.first, Prebuilt.isControlScalar(s) {
-                    throw NonEmptyTextParserError.invalidCharacter(ch, location: Prebuilt.loc(in: input, offset: cursor.offset))
+            while let character = cursor.peek() {
+                let isNewline = character == "\n" || character == "\r" || character == "\r\n"
+                if isNewline && !config.allowNewlines {
+                    throw NonEmptyTextParserError.invalidCharacter(
+                        character,
+                        location: Prebuilt.loc(in: input, offset: cursor.offset)
+                    )
                 }
 
-                if ch == "\n" || ch == "\r" {
-                    if !config.allowNewlines {
-                        throw NonEmptyTextParserError.invalidCharacter(ch, location: Prebuilt.loc(in: input, offset: cursor.offset))
-                    }
+                if !isNewline,
+                   let scalar = character.unicodeScalars.first,
+                   Prebuilt.isControlScalar(scalar) {
+                    throw NonEmptyTextParserError.invalidCharacter(
+                        character,
+                        location: Prebuilt.loc(in: input, offset: cursor.offset)
+                    )
                 }
 
-                if ch.isWhitespace || ch == "\n" || ch == "\r" {
+                if character.isWhitespace || isNewline {
                     if config.collapseWhitespace {
-                        pendingSpace = pendingSpace || sawNonWS
+                        pendingSpace = pendingSpace || sawNonWhitespace
                     } else {
-                        out.append(ch)
+                        output.append(character)
                     }
                     cursor.advance()
                     continue
                 }
 
                 flushPendingSpaceIfNeeded()
-                out.append(ch)
-                sawNonWS = true
+                output.append(character)
+                sawNonWhitespace = true
                 cursor.advance()
             }
 
-            out = out.trimmingCharacters(in: .whitespacesAndNewlines)
-            let len = out.count
-
-            if len == 0 { throw NonEmptyTextParserError.empty }
-            if len < config.minLength { throw NonEmptyTextParserError.tooShort(min: config.minLength, actual: len) }
-            if len > config.maxLength { throw NonEmptyTextParserError.tooLong(max: config.maxLength, actual: len) }
-
-            _ = cursor.slice(from: start) // consumed slice (for composition semantics); output is normalized
-            return NonEmptyText(validated: out)
+            return NonEmptyText.Raw(output.trimmingCharacters(in: .whitespacesAndNewlines))
         }
     }
 }

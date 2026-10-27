@@ -1,28 +1,66 @@
 import Foundation
 import Position
 import Parsing
+import Primitives
 
 extension Prebuilt {
-    public struct EmailAddress: Equatable, Sendable, Hashable, Codable {
+    public struct EmailAddress: Invariant, Equatable, Sendable, Hashable, Codable {
+        /// Only the email scanner can construct this lexically checked input.
+        /// Semantic completeness is checked when constructing EmailAddress.
+        public struct Raw: Sendable, Hashable {
+            public let value: String
+
+            fileprivate init(lexicallyValid value: String) {
+                self.value = value
+            }
+        }
+
+        public typealias Error = EmailParserError
+
         public let rawValue: String
 
-        public init(
-            _ value: String
-        ) throws {
+        public init(_ raw: Raw) throws(Error) {
+            guard let separator = raw.value.firstIndex(of: "@") else {
+                throw .missingAt
+            }
+            guard separator != raw.value.startIndex else {
+                throw .emptyLocalPart
+            }
+            let domain = raw.value[raw.value.index(after: separator)...]
+            guard !domain.isEmpty, domain.contains(".") else {
+                throw .emptyDomain
+            }
+            self.rawValue = raw.value
+        }
+
+        public init(_ value: String) throws {
             self = try EmailParser.parse(value)
         }
 
-        public init(
-            _ value: String?
-        ) throws {
-            guard let v = value else { 
+        public init(_ value: String?) throws {
+            guard let value else {
                 throw RawInputValueError.empty(Self.self)
             }
-            try self.init(v)
+            try self.init(value)
         }
 
-        internal init(validated rawValue: String) {
-            self.rawValue = rawValue
+        private enum CodingKeys: String, CodingKey {
+            case rawValue
+        }
+
+        /// Preserve the existing keyed representation, but never trust decoded data.
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let value = try container.decode(String.self, forKey: .rawValue)
+            do {
+                try self.init(value)
+            } catch {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .rawValue,
+                    in: container,
+                    debugDescription: error.localizedDescription
+                )
+            }
         }
     }
 
@@ -54,35 +92,47 @@ extension Prebuilt {
         public init() {}
 
         public func parse(_ cursor: Cursor) -> ParseResult<EmailAddress> {
-            var cur = cursor
-            let start = cur.mark()
+            RawEmailParser()
+                .invariant(EmailAddress.self)
+                .parse(cursor)
+        }
 
-            do {
-                let out = try Self.parseEmail(&cur)
-                return .success(out, cur)
-            } catch let e as EmailParserError {
-                let d = Diagnostic(e.localizedDescription, range: cur.range(from: start))
-                return .failure(d)
-            } catch {
-                let d = Diagnostic("Email parse failed: \(error.localizedDescription)", range: cur.range(from: start))
-                return .failure(d)
+        private struct RawEmailParser: Parser, Sendable {
+            func parse(_ cursor: Cursor) -> ParseResult<EmailAddress.Raw> {
+                var current = cursor
+                let start = current.mark()
+                do {
+                    return .success(try EmailParser.parseEmail(&current), current)
+                } catch let error as EmailParserError {
+                    return .failure(Diagnostic(
+                        error.localizedDescription,
+                        range: current.range(from: start),
+                        committed: cursor.peek() != nil
+                    ))
+                } catch {
+                    return .failure(Diagnostic(
+                        "Email parse failed: \(error.localizedDescription)",
+                        range: current.range(from: start),
+                        committed: cursor.peek() != nil
+                    ))
+                }
             }
         }
 
-        // Convenience for validation/normal use
+        // Convenience for validation/normal use.
         public static func parse(_ input: String) throws -> EmailAddress {
-            var cur = Cursor(input)
-            let out = try parseEmail(&cur)
-
-            // ensure full consumption
-            if cur.peek() != nil {
-                throw EmailParserError.invalidCharacter(cur.peek()!, location: loc(in: input, offset: cur.offset))
+            var cursor = Cursor(input)
+            let raw = try parseEmail(&cursor)
+            if let character = cursor.peek() {
+                throw EmailParserError.invalidCharacter(
+                    character,
+                    location: loc(in: input, offset: cursor.offset)
+                )
             }
-
-            return out
+            return try EmailAddress(raw)
         }
 
-        private static func parseEmail(_ cursor: inout Cursor) throws -> EmailAddress {
+        private static func parseEmail(_ cursor: inout Cursor) throws -> EmailAddress.Raw {
             let start = cursor.mark()
             let input = cursor.input
 
@@ -93,7 +143,6 @@ extension Prebuilt {
             var localLastWasDot = false
 
             var domainLength = 0
-            var domainHasDot = false
             var labelLength = 0
             var labelLastWasHyphen = false
 
@@ -157,7 +206,6 @@ extension Prebuilt {
 
                         try finishLabelIfNeeded(at: max(0, cursor.offset - 1))
 
-                        domainHasDot = true
                         labelLength = 0
                         labelLastWasHyphen = false
 
@@ -197,18 +245,14 @@ extension Prebuilt {
                 }
             }
 
-            // Final validations
-            if phase == .local { throw EmailParserError.missingAt }
-            if localLength == 0 { throw EmailParserError.emptyLocalPart }
-            if domainLength == 0 { throw EmailParserError.emptyDomain }
+            // Preserve the scanner's precise offending-character location.
+            // Missing '@', empty domains, and missing domain dots are intrinsic
+            // completeness checks performed by EmailAddress.init(_ raw:).
+            if phase == .domain, domainLength > 0 {
+                try finishLabelIfNeeded(at: max(0, cursor.offset - 1))
+            }
 
-            // Domain cannot end with '.' or '-' and must have at least one dot
-            let lastOffset = max(0, cursor.offset - 1)
-            try finishLabelIfNeeded(at: lastOffset)
-            if !domainHasDot { throw EmailParserError.emptyDomain }
-
-            let raw = cursor.slice(from: start)
-            return EmailAddress(validated: raw)
+            return EmailAddress.Raw(lexicallyValid: String(cursor.slice(from: start)))
         }
 
         static func isAllowedLocal(_ ch: Character) -> Bool {
