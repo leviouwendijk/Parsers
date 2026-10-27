@@ -20,7 +20,7 @@ let package = Package(
 
         // testing
         .executable(
-            name: "parsertest",
+            name: "t_parsers",
             targets: ["ParsersTestFlows"]
         ),
         .executable(

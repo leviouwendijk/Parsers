@@ -24,6 +24,7 @@ extension Prebuilt {
     public enum BoundedIntegerParserError: Error, LocalizedError, Sendable, Equatable {
         case empty
         case invalidCharacter(Character)
+        case overflow
         case outOfRange(min: Int, max: Int, actual: Int)
 
         public var errorDescription: String? {
@@ -33,6 +34,8 @@ extension Prebuilt {
 
             case .invalidCharacter(let character):
                 return "Invalid integer character '\(character)'"
+            case .overflow:
+                return "Integer exceeds the representable Int range"
 
             case .outOfRange(let min, let max, let actual):
                 return "Integer out of range \(min)...\(max), got \(actual)"
@@ -64,14 +67,24 @@ extension Prebuilt {
             var value = 0
 
             for character in trimmed {
-                guard let scalar = character.unicodeScalars.first,
+                guard character.unicodeScalars.count == 1,
+                      let scalar = character.unicodeScalars.first,
                       scalar.isASCII,
                       (48...57).contains(scalar.value)
                 else {
                     throw BoundedIntegerParserError.invalidCharacter(character)
                 }
 
-                value = (value * 10) + Int(scalar.value - 48)
+                let digit = Int(scalar.value - 48)
+                let (multiplied, multiplicationOverflow) = value.multipliedReportingOverflow(by: 10)
+                guard !multiplicationOverflow else {
+                    throw BoundedIntegerParserError.overflow
+                }
+                let (sum, additionOverflow) = multiplied.addingReportingOverflow(digit)
+                guard !additionOverflow else {
+                    throw BoundedIntegerParserError.overflow
+                }
+                value = sum
             }
 
             return try BoundedInteger(

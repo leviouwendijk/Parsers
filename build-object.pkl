@@ -1,0 +1,24 @@
+uuid = "189764C3-3F02-4EAE-8B4E-F37C53D812B1"
+name = "Parsers"
+types { "library" }
+versions {
+    release {
+        major = 0
+        minor = 1
+        patch = 0
+    }
+}
+compile {
+    use = false
+    arguments { }
+}
+tests {
+    primary = "t_parsers"
+
+    groups {
+        invariance { "t_parsers_invariance" }
+    }
+}
+details = ""
+author = "levi"
+update = "https://raw.githubusercontent.com/leviouwendijk/Parsers/master/build-object.pkl"

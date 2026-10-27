@@ -8,6 +8,7 @@ extension Prebuilt.Content {
         case unexpectedField(String)
         case expectedNumericValue(String)
         case expectedIntegerValue(String)
+        case integerOutOfRange(String)
 
         public var errorDescription: String? {
             switch self {
@@ -19,6 +20,8 @@ extension Prebuilt.Content {
                     return "Expected numeric value for field '\(name)'"
                 case .expectedIntegerValue(let name):
                     return "Expected integer value for field '\(name)'"
+                case .integerOutOfRange(let name):
+                    return "Integer value for field '\(name)' is out of range"
             }
         }
     }
@@ -120,7 +123,19 @@ extension Prebuilt.Content {
                     )
                 }
 
-                let intValue = NSDecimalNumber(decimal: decimalValue).intValue
+                // NSDecimalNumber.intValue can silently truncate or wrap.
+                // Only accept a conversion that exactly reconstructs the source Decimal.
+                let candidate = NSDecimalNumber(decimal: decimalValue).int64Value
+                guard let intValue = Int(exactly: candidate),
+                      Decimal(intValue) == decimalValue else {
+                    return .failure(
+                        Diagnostic(
+                            DateBlockParserError
+                                .integerOutOfRange(fieldName)
+                                .localizedDescription
+                        )
+                    )
+                }
 
                 switch fieldName {
                     case "year":

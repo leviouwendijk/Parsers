@@ -144,5 +144,11 @@ public enum ParsersInvariantTestsSuite {
         Test("email-diagnostics", tags: ["email"]) { try test_email_diagnostics() }
         Test("email-codable", tags: ["email"]) { try test_email_codable() }
         Test("email-optional-input", tags: ["email"]) { try test_email_optional_input() }
+        Test("bounded-limits", tags: ["numeric"]) { try test_bounded_integer_limits() }
+        Test("bounded-overflow", tags: ["numeric"]) { try test_bounded_integer_overflow() }
+        Test("bounded-invalid", tags: ["numeric"]) { try test_bounded_integer_invalid() }
+        Test("date-block-valid", tags: ["numeric", "date"]) { try test_date_block_valid() }
+        Test("date-block-fractional", tags: ["numeric", "date"]) { try test_date_block_fractional() }
+        Test("date-block-overflow", tags: ["numeric", "date"]) { try test_date_block_overflow() }
     }
 }
