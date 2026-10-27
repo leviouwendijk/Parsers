@@ -1,5 +1,5 @@
 {
-  "originHash" : "9ef86d6f7c324a9e095d4019461b17c8b4b68fa5d23160ff5941b4bb515a5407",
+  "originHash" : "c95d2b8cdc16f57e705c325f3b9213b01a1dd4304df4c5a7ac26255266d61c24",
   "pins" : [
     {
       "identity" : "atomos",
@@ -25,7 +25,7 @@
       "location" : "https://github.com/leviouwendijk/Methods.git",
       "state" : {
         "branch" : "master",
-        "revision" : "62656c2e32b7889df68415464b67b440f7e7e464"
+        "revision" : "1a98599ae3c5d65eb5793e0f02b99e869dbfc9c5"
       }
     },
     {
@@ -52,7 +52,7 @@
       "location" : "https://github.com/leviouwendijk/Primitives.git",
       "state" : {
         "branch" : "master",
-        "revision" : "239603be564915e79ae83c87cb3bec4e60ff1a48"
+        "revision" : "ffb3259c3cf3ec3f90d831bc42013a2af63779eb"
       }
     },
     {

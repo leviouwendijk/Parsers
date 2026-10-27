@@ -31,13 +31,16 @@ extension Prebuilt.Content {
 
         public let assignment: AnyTokenParser<Void>
         public let skip: AnyTokenParser<Void>
+        public let endOnRightBrace: Bool
 
         public init(
             assignment: AnyTokenParser<Void>,
-            skip: AnyTokenParser<Void> = Skip.accountingLike()
+            skip: AnyTokenParser<Void> = Skip.accountingLike(),
+            endOnRightBrace: Bool = false
         ) {
             self.assignment = assignment
             self.skip = skip
+            self.endOnRightBrace = endOnRightBrace
         }
 
         public func parse(
@@ -51,8 +54,9 @@ extension Prebuilt.Content {
             while true {
                 cur = consumeSkip(from: cur)
 
-                if cur.isEOF {
-                    cur = consumeSkip(from: cur)
+                // Embedded content leaves the closing brace unconsumed for
+                // the enclosing BlockParser; standalone parses still require EOF.
+                if cur.isEOF || (endOnRightBrace && cur.peek()?.sameCase(as: .right_brace) == true) {
                     do {
                         return .success(
                             try PartialDate(

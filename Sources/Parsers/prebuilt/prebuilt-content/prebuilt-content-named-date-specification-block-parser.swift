@@ -22,7 +22,8 @@ extension Prebuilt.Content {
                     content: AnyTokenParser(
                         DateBlockParser(
                             assignment: assignment,
-                            skip: skip
+                            skip: skip,
+                            endOnRightBrace: true
                         )
                     ),
                     skip: skip

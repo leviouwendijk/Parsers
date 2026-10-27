@@ -150,5 +150,7 @@ public enum ParsersInvariantTestsSuite {
         Test("date-block-valid", tags: ["numeric", "date"]) { try test_date_block_valid() }
         Test("date-block-fractional", tags: ["numeric", "date"]) { try test_date_block_fractional() }
         Test("date-block-overflow", tags: ["numeric", "date"]) { try test_date_block_overflow() }
+        Test("date-brace-closing", tags: ["numeric", "date"]) { try test_date_brace_block_closing_delimiter() }
+        Test("date-brace-invalid", tags: ["numeric", "date"]) { try test_date_brace_block_invalid_contents() }
     }
 }

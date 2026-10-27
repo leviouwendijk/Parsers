@@ -108,3 +108,42 @@ func test_date_block_overflow() throws {
         }
     }
 }
+
+private func parseBraceNumericDateBlock(_ source: String) -> TokenParseResult<Prebuilt.Content.DateBraceBlockParser.Output> {
+    var options = LexerOptions()
+    options.emit_whitespace = false
+    options.emit_newlines = false
+    options.emit_comments = false
+
+    var lexer = Lexer(source: source, sets: LexingSets(keywords: []), options: options)
+    return Prebuilt.Content.DateBraceBlockParser(
+        assignment: Prebuilt.Content.Assignment.equals(),
+        skip: Prebuilt.Content.Skip.trivia()
+    ).parse(TokenCursor(lexedTokens: lexer.lexedTokens(), source: source))
+}
+
+func test_date_brace_block_closing_delimiter() throws {
+    switch parseBraceNumericDateBlock("{ year = 2024 month = 2 day = 29 }") {
+    case .success(let value, let remainder):
+        try Expect.true(value.year == 2024 && value.month == 2 && value.day == 29,
+                        "brace date block must return a validated PartialDate")
+        try Expect.true(remainder.isEOF, "closing delimiter consumed by wrapper")
+    case .failure(let diagnostic):
+        try Expect.true(false, "valid brace date block must parse: \(diagnostic)")
+    }
+}
+
+func test_date_brace_block_invalid_contents() throws {
+    for source in [
+        "{ year = 2025 month = 2 day = 29 }",
+        "{ year = 2024 year = 2025 month = 2 day = 29 }",
+        "{ year = 2024 month = 2 day = 29"
+    ] {
+        switch parseBraceNumericDateBlock(source) {
+        case .success:
+            try Expect.true(false, "invalid or unterminated brace date block must fail: \(source)")
+        case .failure:
+            break
+        }
+    }
+}
