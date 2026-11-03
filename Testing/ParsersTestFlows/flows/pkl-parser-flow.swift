@@ -63,6 +63,19 @@ extension ParserTestSuite {
             try Expect.equal(members.map(\.name), ["version", "arguments"], "pkl.compiled.members")
         }
 
+        Test("Pkl spans convert explicitly from Character to UTF-8") {
+            let source = "label = \"👩‍💻\"\r\nname = \"é\""
+            let document = try Pkl.parse(source)
+            let map = Position.TextMap(source: source)
+            try Expect.equal(document.entries.count, 2, "entries")
+            let second = document.entries[1].range
+            try Expect.equal(second.start.offset, 12, "Character start")
+            try Expect.equal(second.end.offset, source.count, "Character end")
+            let bytes = try map.range(second, as: Position.Unit.UTF8.self)
+            try Expect.equal(bytes.lowerBound.offset, 23, "UTF-8 start")
+            try Expect.equal(bytes.upperBound.offset, source.utf8.count, "UTF-8 end")
+        }
+
         Test("duplicate keys and character spans survive tokenization") {
             let source = "// note\nname = \"🎓\"\nname = \"two\""
             let document = try Pkl.parse(source)

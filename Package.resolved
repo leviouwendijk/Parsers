@@ -20,6 +20,15 @@
       }
     },
     {
+      "identity" : "lexing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/Lexing.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "255ea89a9e7f8d3d3ce0562b2102ca430a3b8602"
+      }
+    },
+    {
       "identity" : "methods",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/leviouwendijk/Methods.git",
@@ -34,7 +43,7 @@
       "location" : "https://github.com/leviouwendijk/Parsing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "eb15870c0eef5cf9901f032454313fe7ecf210f4"
+        "revision" : "891aca93fac175a8104e4b272aff0d9d91a05e6b"
       }
     },
     {
@@ -43,7 +52,7 @@
       "location" : "https://github.com/leviouwendijk/Position.git",
       "state" : {
         "branch" : "master",
-        "revision" : "f4b2a54d00898e52111ac452b851cb00cf9538aa"
+        "revision" : "6c06f1b941553030a1992479783bc24b457aaccc"
       }
     },
     {
@@ -52,7 +61,16 @@
       "location" : "https://github.com/leviouwendijk/Primitives.git",
       "state" : {
         "branch" : "master",
-        "revision" : "ffb3259c3cf3ec3f90d831bc42013a2af63779eb"
+        "revision" : "2a1996970e4549ab110ffa72f654560a72ad2ca7"
+      }
+    },
+    {
+      "identity" : "schema",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leviouwendijk/Schema.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "a3b2d62e52cb7e061d5a5cdadb63f4d31684dd4d"
       }
     },
     {
