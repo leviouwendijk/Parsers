@@ -101,6 +101,18 @@ extension ParserTestSuite {
             try Expect.equal(document.entries[3].value, .string("line\nnext"), "pkl.scalar.escaped-string")
         }
 
+        Test("Pkl failure retains exact UTF-8 token provenance") {
+            let source = "name = \"é\"\nmajor = 1.5"
+            let expectedStart = "name = \"é\"\nmajor = ".utf8.count
+            do {
+                _ = try Pkl.parse(source)
+                try Expect.true(false, "non-integer should be rejected")
+            } catch let failure as Pkl.SyntaxFailure {
+                try Expect.equal(failure.diagnostic.utf8Range?.lowerBound.offset, expectedStart, "byte start")
+                try Expect.equal(failure.diagnostic.utf8Range?.upperBound.offset, source.utf8.count, "byte end")
+            }
+        }
+
         Test("malformed inputs return diagnostics rather than partial documents") {
             try Expect.throwsError("pkl.unterminated-block") {
                 _ = try Pkl.parse("compile { use = true")

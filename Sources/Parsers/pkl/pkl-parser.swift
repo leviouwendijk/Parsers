@@ -19,20 +19,16 @@ extension Pkl {
         _ source: String,
         filePath: String? = nil
     ) throws -> Document {
-        var options = LexerOptions()
-        options.emit_whitespace = false
-        options.emit_newlines = false
-        options.emit_comments = false
-
-        // Do not enable lexer string-block keywords: Pkl braces must remain structural.
-        var lexer = Lexer(
-            source: source,
-            sets: LexingSets(keywords: []),
-            options: options
+        // Grammar remains the syntax-definition layer; no Pkl block shortcuts.
+        // Legacy date recognition stays explicit for Pkl source parity.
+        let specification = try Lexer.Specification(
+            vocabulary: .init(keywords: []),
+            recognize_dates: true
         )
+        let lexing = try specification.lex(source)
         let cursor = TokenCursor(
-            lexedTokens: lexer.lexedTokens(),
-            source: source,
+            lexing: lexing,
+            selection: .significant,
             filePath: filePath
         )
 
@@ -40,7 +36,7 @@ extension Pkl {
         case .success(let document, let remainder):
             guard remainder.isEOF else {
                 throw SyntaxFailure(
-                    Diagnostic("Unexpected trailing Pkl tokens", range: remainder.currentRange)
+                    remainder.diagnostic("Unexpected trailing Pkl tokens")
                 )
             }
             return document
@@ -71,10 +67,10 @@ extension Pkl {
             var entries: [Entry] = []
 
             while !current.isEOF {
-                if let token = current.peek(), token.sameCase(as: .right_brace) {
+                if let token = current.peek(), token.samecase(as: .right_brace) {
                     guard closingBrace else {
                         return .failure(
-                            Diagnostic("Unexpected closing brace", range: current.currentRange)
+                            current.diagnostic("Unexpected closing brace")
                         )
                     }
                     current.advance()
@@ -86,7 +82,7 @@ extension Pkl {
                     return .failure(diagnostic)
                 case .success(let entry, let next):
                     guard next.index > current.index else {
-                        return .failure(Diagnostic("Pkl parser made no progress"))
+                        return .failure(current.diagnostic("Pkl parser made no progress"))
                     }
                     entries.append(entry)
                     current = next
@@ -94,7 +90,7 @@ extension Pkl {
             }
 
             if closingBrace {
-                return .failure(Diagnostic("Unterminated Pkl block: expected '}'", range: current.currentRange))
+                return .failure(current.diagnostic("Unterminated Pkl block: expected '}'"))
             }
             return .success(entries, current)
         }
@@ -106,18 +102,18 @@ extension Pkl {
 
             switch PIdent().parse(cursor) {
             case .failure:
-                return .failure(Diagnostic("Expected Pkl field name", range: cursor.currentRange))
+                return .failure(cursor.diagnostic("Expected Pkl field name"))
             case .success(let parsedName, let next):
                 name = parsedName
                 current = next
             }
 
             // Both `name = value` and `name { ... }` are accepted.
-            if let token = current.peek(), token.sameCase(as: .equals) {
+            if let token = current.peek(), token.samecase(as: .equals) {
                 current.advance()
-            } else if current.peek()?.sameCase(as: .left_brace) != true {
+            } else if current.peek()?.samecase(as: .left_brace) != true {
                 return .failure(
-                    Diagnostic("Expected '=' or '{' after '\(name)'", range: current.currentRange)
+                    current.diagnostic("Expected '=' or '{' after '\(name)'")
                 )
             }
 
@@ -126,7 +122,7 @@ extension Pkl {
                 return .failure(diagnostic)
             case .success(let value, let next):
                 guard let range = next.sourceRange(from: mark) else {
-                    return .failure(Diagnostic("Missing source range for '\(name)'"))
+                    return .failure(next.diagnostic("Missing source range for '\(name)'"))
                 }
                 return .success(Entry(name: name, value: value, range: range), next)
             }
@@ -135,7 +131,7 @@ extension Pkl {
         private static func parseValue(_ cursor: TokenCursor) -> TokenParseResult<Value> {
             var next = cursor
             guard let token = next.peek() else {
-                return .failure(Diagnostic("Expected Pkl value", range: cursor.currentRange))
+                return .failure(cursor.diagnostic("Expected Pkl value"))
             }
 
             switch token {
@@ -144,14 +140,14 @@ extension Pkl {
                 return .success(.string(text), next)
             case .number(_, let raw):
                 guard let number = Int(raw) else {
-                    return .failure(Diagnostic("Expected an integer, found '\(raw)'", range: next.currentRange))
+                    return .failure(next.diagnostic("Expected an integer, found '\(raw)'"))
                 }
                 next.advance()
                 return .success(.integer(number), next)
             case .dash:
                 next.advance()
                 guard case .number(_, let raw)? = next.peek(), let number = Int("-" + raw) else {
-                    return .failure(Diagnostic("Expected integer after '-'", range: next.currentRange))
+                    return .failure(next.diagnostic("Expected integer after '-'"))
                 }
                 next.advance()
                 return .success(.integer(number), next)
@@ -168,14 +164,14 @@ extension Pkl {
                 next.advance()
                 return parseCollection(next, closing: .right_bracket)
             default:
-                return .failure(Diagnostic("Expected Pkl value", range: cursor.currentRange))
+                return .failure(cursor.diagnostic("Expected Pkl value"))
             }
         }
 
         private static func parseBraceBody(_ cursor: TokenCursor) -> TokenParseResult<Value> {
             // Empty braces are syntactically ambiguous: treat them as an empty block.
             // A domain decoder may interpret an empty block as an empty string collection.
-            if cursor.peek()?.sameCase(as: .right_brace) == true {
+            if cursor.peek()?.samecase(as: .right_brace) == true {
                 var next = cursor
                 next.advance()
                 return .success(.block([]), next)
@@ -185,8 +181,8 @@ extension Pkl {
             if case .identifier? = cursor.peek() {
                 var lookahead = cursor
                 lookahead.advance()
-                if lookahead.peek()?.sameCase(as: .equals) == true
-                    || lookahead.peek()?.sameCase(as: .left_brace) == true {
+                if lookahead.peek()?.samecase(as: .equals) == true
+                    || lookahead.peek()?.samecase(as: .left_brace) == true {
                     switch parseEntries(cursor, closingBrace: true) {
                     case .success(let entries, let next):
                         return .success(.block(entries), next)
@@ -207,7 +203,7 @@ extension Pkl {
             var elements: [Value] = []
 
             while !current.isEOF {
-                if current.peek()?.sameCase(as: closing) == true {
+                if current.peek()?.samecase(as: closing) == true {
                     current.advance()
                     return .success(.collection(elements), current)
                 }
@@ -217,20 +213,20 @@ extension Pkl {
                     return .failure(diagnostic)
                 case .success(let value, let next):
                     guard next.index > current.index else {
-                        return .failure(Diagnostic("Pkl collection parser made no progress"))
+                        return .failure(current.diagnostic("Pkl collection parser made no progress"))
                     }
                     elements.append(value)
                     current = next
                 }
 
                 // Commas are optional for both `{ "a" "b" }` and `["a", "b"]`.
-                if current.peek()?.sameCase(as: .comma) == true {
+                if current.peek()?.samecase(as: .comma) == true {
                     current.advance()
                 }
             }
 
             return .failure(
-                Diagnostic("Unterminated Pkl collection: expected '\(closing.string())'", range: current.currentRange)
+                current.diagnostic("Unterminated Pkl collection: expected '\(closing.string())'")
             )
         }
     }

@@ -56,7 +56,7 @@ extension Prebuilt.Content {
 
                 // Embedded content leaves the closing brace unconsumed for
                 // the enclosing BlockParser; standalone parses still require EOF.
-                if cur.isEOF || (endOnRightBrace && cur.peek()?.sameCase(as: .right_brace) == true) {
+                if cur.isEOF || (endOnRightBrace && cur.peek()?.samecase(as: .right_brace) == true) {
                     do {
                         return .success(
                             try PartialDate(

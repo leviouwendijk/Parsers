@@ -53,14 +53,14 @@ func test_bounded_integer_invalid() throws {
 }
 
 private func parseNumericDateBlock(_ source: String) -> TokenParseResult<Prebuilt.Content.DateBlockParser.Output> {
-    var options = LexerOptions()
-    options.emit_whitespace = false
-    options.emit_newlines = false
-    options.emit_comments = false
+    var options = Lexer.Options()
+    options.emit.whitespace = false
+    options.emit.newlines = false
+    options.emit.comments = false
 
     var lexer = Lexer(
         source: source,
-        sets: LexingSets(keywords: []),
+        sets: Lexer.Vocabulary(keywords: []),
         options: options
     )
     return Prebuilt.Content.DateBlockParser(
@@ -110,12 +110,12 @@ func test_date_block_overflow() throws {
 }
 
 private func parseBraceNumericDateBlock(_ source: String) -> TokenParseResult<Prebuilt.Content.DateBraceBlockParser.Output> {
-    var options = LexerOptions()
-    options.emit_whitespace = false
-    options.emit_newlines = false
-    options.emit_comments = false
+    var options = Lexer.Options()
+    options.emit.whitespace = false
+    options.emit.newlines = false
+    options.emit.comments = false
 
-    var lexer = Lexer(source: source, sets: LexingSets(keywords: []), options: options)
+    var lexer = Lexer(source: source, sets: Lexer.Vocabulary(keywords: []), options: options)
     return Prebuilt.Content.DateBraceBlockParser(
         assignment: Prebuilt.Content.Assignment.equals(),
         skip: Prebuilt.Content.Skip.trivia()
