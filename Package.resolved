@@ -25,7 +25,7 @@
       "location" : "https://github.com/leviouwendijk/Lexing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "255ea89a9e7f8d3d3ce0562b2102ca430a3b8602"
+        "revision" : "36fe27df513c052cf1a0a99cfd5a44a278d48fc7"
       }
     },
     {
@@ -43,7 +43,7 @@
       "location" : "https://github.com/leviouwendijk/Parsing.git",
       "state" : {
         "branch" : "master",
-        "revision" : "891aca93fac175a8104e4b272aff0d9d91a05e6b"
+        "revision" : "906213266e5989eb09a767282bf39f99f776491f"
       }
     },
     {
