@@ -1,4 +1,5 @@
 import Foundation
+import GrammarParsing
 import Parsing
 import Primitives
 
@@ -152,25 +153,25 @@ extension Prebuilt {
             _ raw: String,
             timeZone: TimeZone
         ) throws -> DateSpecification {
-            let parts = raw
-                .split(separator: "-", omittingEmptySubsequences: false)
-                .map(String.init)
-
-            guard
-                parts.count == 3,
-                let year = Int(parts[0]),
-                let month = Int(parts[1]),
-                let day = Int(parts[2])
-            else {
+            let syntax: GrammarParser.Node
+            do {
+                syntax = try parseISOSyntax(raw)
+            } catch {
                 throw DateSpecificationParserError.invalidLiteral(raw)
             }
 
-            let partial = try PartialDate(
-                year: year,
-                month: month,
-                day: day
-            )
+            let components = syntax.children.compactMap { node -> (String, String)? in
+                guard let field = node.field, let text = node.text else { return nil }
+                return (field, text)
+            }
+            guard components.count == 3,
+                  components[0].0 == "year", let year = Int(components[0].1),
+                  components[1].0 == "month", let month = Int(components[1].1),
+                  components[2].0 == "day", let day = Int(components[2].1) else {
+                throw DateSpecificationParserError.invalidLiteral(raw)
+            }
 
+            let partial = try PartialDate(year: year, month: month, day: day)
             return .absolute(try partial.resolve(in: timeZone))
         }
 

@@ -10,5 +10,6 @@ enum ParserTestSuite {
         pklSyntaxSuite
         pklParserSuite
         pklCodingSuite
+        grammarISODateSuite
     }
 }
