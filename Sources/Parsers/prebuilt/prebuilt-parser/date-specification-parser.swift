@@ -164,10 +164,12 @@ extension Prebuilt {
                 guard let field = node.field, let text = node.text else { return nil }
                 return (field, text)
             }
-            guard components.count == 3,
-                  components[0].0 == "year", let year = Int(components[0].1),
-                  components[1].0 == "month", let month = Int(components[1].1),
-                  components[2].0 == "day", let day = Int(components[2].1) else {
+            guard 
+                components.count == 3,
+                components[0].0 == "year", let year = Int(components[0].1),
+                components[1].0 == "month", let month = Int(components[1].1),
+                components[2].0 == "day", let day = Int(components[2].1)
+            else {
                 throw DateSpecificationParserError.invalidLiteral(raw)
             }
 
