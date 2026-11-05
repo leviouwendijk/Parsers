@@ -19,30 +19,7 @@ extension Pkl {
         _ source: String,
         filePath: String? = nil
     ) throws -> Document {
-        // Grammar remains the syntax-definition layer; no Pkl block shortcuts.
-        // Legacy date recognition stays explicit for Pkl source parity.
-        let specification = try Lexer.Specification(
-            vocabulary: .init(keywords: []),
-            recognize_dates: true
-        )
-        let lexing = try specification.lex(source)
-        let cursor = TokenCursor(
-            lexing: lexing,
-            selection: .significant,
-            filePath: filePath
-        )
-
-        switch Parser().parse(cursor) {
-        case .success(let document, let remainder):
-            guard remainder.isEOF else {
-                throw SyntaxFailure(
-                    remainder.diagnostic("Unexpected trailing Pkl tokens")
-                )
-            }
-            return document
-        case .failure(let diagnostic):
-            throw SyntaxFailure(diagnostic)
-        }
+        try parseCanonical(source, filePath: filePath)
     }
 
     public struct Parser: TokenParser {

@@ -11,5 +11,6 @@ enum ParserTestSuite {
         pklParserSuite
         pklCodingSuite
         grammarISODateSuite
+        pklGrammarSuite
     }
 }
