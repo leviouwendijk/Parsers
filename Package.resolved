@@ -1,5 +1,5 @@
 {
-  "originHash" : "c95d2b8cdc16f57e705c325f3b9213b01a1dd4304df4c5a7ac26255266d61c24",
+  "originHash" : "3ec88ea03113ef195ee32b74c2b05c3cf65e65579fada81b39722c9b3f392a38",
   "pins" : [
     {
       "identity" : "atomos",
@@ -16,7 +16,7 @@
       "location" : "https://github.com/leviouwendijk/DSL.git",
       "state" : {
         "branch" : "master",
-        "revision" : "30ec6798f883b91f697d060bb001e0e4f7a09225"
+        "revision" : "b85a4fcf315dfa6c100b38adc7a9cdec15ad817f"
       }
     },
     {

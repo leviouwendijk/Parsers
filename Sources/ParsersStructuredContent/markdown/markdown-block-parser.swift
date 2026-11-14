@@ -113,7 +113,54 @@ struct MarkdownBlockParser {
             )
         }
 
+        if startsTable(at: index) {
+            return parseTable()
+        }
+
         return parseParagraph()
+    }
+
+    /// A header row, a delimiter row, then body rows until a blank line or
+    /// a line without cells. Rows are padded or cut to the header's width.
+    private mutating func parseTable() -> StructuredContent {
+        let header = tableCells(in: lines[index]) ?? []
+        index += 2
+
+        var rows: [[StructuredContent]] = []
+
+        while index < lines.count,
+              !isBlank(lines[index]),
+              let cells = tableCells(in: lines[index])
+        {
+            rows.append(
+                tableRow(
+                    cells,
+                    width: header.count
+                )
+            )
+            index += 1
+        }
+
+        return .table(
+            header: tableRow(
+                header,
+                width: header.count
+            ),
+            rows: rows
+        )
+    }
+
+    private func tableRow(
+        _ cells: [String],
+        width: Int
+    ) -> [StructuredContent] {
+        (0..<width).map { column in
+            .paragraph(
+                cells.indices.contains(column)
+                    ? MarkdownInlineParser.parse(cells[column])
+                    : []
+            )
+        }
     }
 
     private mutating func parseFence(
@@ -276,7 +323,7 @@ struct MarkdownBlockParser {
             }
 
             if !paragraphLines.isEmpty,
-               startsBlock(line)
+               startsBlock(line) || startsTable(at: index)
             {
                 break
             }

@@ -164,6 +164,68 @@ extension ParserTestSuite {
             )
         }
 
+        Test("tables parse into rows of cells") {
+            let parsed =
+                MarkdownStructuredContentParser.parse(
+                    """
+                    Costs:
+                    | Tool | Bytes |
+                    |:---|---:|
+                    | `a|b` | **12** |
+                    | x \\| y |
+                    after | the table
+                    """
+                )
+
+            let expected: StructuredContent =
+                .collection([
+                    .paragraph([
+                        .text("Costs:"),
+                    ]),
+                    .table(
+                        header: [
+                            .paragraph([.text("Tool")]),
+                            .paragraph([.text("Bytes")]),
+                        ],
+                        rows: [
+                            [
+                                .paragraph([.code("a|b")]),
+                                .paragraph([.strong([.text("12")])]),
+                            ],
+                            [
+                                .paragraph([.text("x | y")]),
+                                .paragraph([]),
+                            ],
+                            [
+                                .paragraph([.text("after")]),
+                                .paragraph([.text("the table")]),
+                            ],
+                        ]
+                    ),
+                ])
+
+            try Expect.equal(
+                parsed,
+                expected,
+                "markdown.structured-content.table"
+            )
+
+            let plain =
+                MarkdownStructuredContentParser.parse(
+                    "a | b without a delimiter row"
+                )
+
+            try Expect.equal(
+                plain,
+                .collection([
+                    .paragraph([
+                        .text("a | b without a delimiter row"),
+                    ]),
+                ]),
+                "markdown.structured-content.table.requires-delimiter"
+            )
+        }
+
         Test("unsupported or incomplete syntax remains text") {
             let parsed =
                 MarkdownStructuredContentParser.parse(
