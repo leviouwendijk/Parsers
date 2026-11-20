@@ -25,11 +25,13 @@ let package = Package(
         .package(url: "https://github.com/leviouwendijk/Primitives.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Position.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/DSL.git", branch: "master"),
+        .package(url: "https://github.com/leviouwendijk/Errors.git", branch: "master"),
     ],
     targets: [
         .target(
             name: "Parsers",
             dependencies: [
+                .product(name: "Errors", package: "Errors"),
                 .product(name: "Parsing", package: "Parsing"),
                 .product(name: "GrammarParsing", package: "Parsing"),
                 .product(name: "Grammar", package: "Grammar"),

@@ -1,3 +1,4 @@
+import Errors
 import Foundation
 import Parsing
 import Parsers
@@ -24,6 +25,10 @@ func test_nonempty_newlines() throws {
             return
         }
         try Expect.true(ch == "\n", "LF error retains the offending character")
+        let report = error.report
+        try Expect.equal(report.diagnostic.identity?.raw, "parsers.non_empty_text.invalid_character", "parser errors have codes")
+        try Expect.equal(report.effectiveDisposition, .invalid_input, "the input must change")
+        try Expect.equal(report.presentation.message, error.localizedDescription, "the parser's own text is kept")
     }
     do {
         _ = try Prebuilt.NonEmptyText("first\r\nsecond", config: forbidden)

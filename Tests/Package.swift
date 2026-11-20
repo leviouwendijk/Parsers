@@ -30,6 +30,7 @@ let package = Package(
         .package(url: "https://github.com/leviouwendijk/DSL.git", branch: "master"),
 
         .package(url: "https://github.com/leviouwendijk/Testing.git", branch: "master"),
+        .package(url: "https://github.com/leviouwendijk/Errors.git", branch: "master"),
         .package(path: ".."),
     ],
     targets: [
@@ -53,6 +54,7 @@ let package = Package(
             name: "ParsersInvariantTests",
             dependencies: [
                 .product(name: "Parsers", package: "Parsers"),
+                .product(name: "Errors", package: "Errors"),
                 .product(name: "Testing", package: "Testing"),
             ]
         ),
