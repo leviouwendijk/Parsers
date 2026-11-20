@@ -1,0 +1,6 @@
+import Executable;
+
+let tests: Tests = .{
+    .primary = "t_parsers",
+    .groups = .{ .invariance = ["t_parsers_invariance"] },
+};
