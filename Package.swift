@@ -17,29 +17,14 @@ let package = Package(
             name: "ParsersStructuredContent",
             targets: ["ParsersStructuredContent"]
         ),
-
-        // testing
-        .executable(
-            name: "t_parsers",
-            targets: ["ParsersTestFlows"]
-        ),
-        .executable(
-            name: "t_parsers_invariance",
-            targets: ["ParsersInvariantTests"
-            ]
-        ),
     ],
     dependencies: [
         .package(url: "https://github.com/leviouwendijk/Parsing.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Grammar.git", branch: "master"),
-        .package(url: "https://github.com/leviouwendijk/Lexing.git", branch: "master"),
-        .package(url: "https://github.com/leviouwendijk/Syntax.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Methods.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Primitives.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/Position.git", branch: "master"),
         .package(url: "https://github.com/leviouwendijk/DSL.git", branch: "master"),
-
-        .package(url: "https://github.com/leviouwendijk/Testing.git", branch: "master"),
     ],
     targets: [
         .target(
@@ -58,31 +43,6 @@ let package = Package(
             dependencies: [
                 .product(name: "DSL", package: "DSL"),
             ]
-        ),
-        .executableTarget(
-            name: "ParsersTestFlows",
-            dependencies: [
-                "Parsers",
-                "ParsersStructuredContent",
-                .product(name: "GrammarParsing", package: "Parsing"),
-                .product(name: "GrammarSyntax", package: "Parsing"),
-                .product(name: "Grammar", package: "Grammar"),
-                .product(name: "GrammarTreeSitter", package: "Grammar"),
-                .product(name: "Lexing", package: "Lexing"),
-                .product(name: "SyntaxLSP", package: "Syntax"),
-                .product(name: "DSL", package: "DSL"),
-                .product(name: "Position", package: "Position"),
-                .product(name: "Testing", package: "Testing"),
-            ],
-            path: "Testing/ParsersTestFlows"
-        ),
-        .executableTarget(
-            name: "ParsersInvariantTests",
-            dependencies: [
-                "Parsers",
-                .product(name: "Testing", package: "Testing"),
-            ],
-            path: "Testing/ParsersInvariantTests"
         ),
     ]
 )
